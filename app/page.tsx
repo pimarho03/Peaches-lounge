@@ -1,65 +1,211 @@
-import Image from "next/image";
+"use client";
+
+import { useEffect, useState } from "react";
+import {
+  ArrowRight,
+  Barbell,
+  CheckCircle,
+  Clock,
+  Coffee,
+  Flower,
+  MapPin,
+  Moon,
+  Sun,
+  Users,
+} from "@phosphor-icons/react";
+
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { GlassCard } from "@/components/glass-card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+
+type ClassItem = {
+  name: string;
+  time: string;
+  instructor: string;
+  icon: React.ReactNode;
+  spots: number;
+};
+
+const CLASSES: ClassItem[] = [
+  {
+    name: "Reformer Pilates",
+    time: "Today · 6:00 PM",
+    instructor: "with Faranak",
+    icon: <Barbell className="size-5" weight="regular" />,
+    spots: 3,
+  },
+  {
+    name: "Vinyasa Yoga",
+    time: "Today · 7:30 PM",
+    instructor: "with Amir",
+    icon: <Flower className="size-5" weight="regular" />,
+    spots: 8,
+  },
+  {
+    name: "Meditation + Matcha",
+    time: "Tomorrow · 9:00 AM",
+    instructor: "with the team",
+    icon: <Coffee className="size-5" weight="regular" />,
+    spots: 0,
+  },
+];
+
+function spotsBadge(spots: number) {
+  if (spots === 0) {
+    return (
+      <Badge className="bg-warning/15 text-warning border-transparent">
+        Waitlist
+      </Badge>
+    );
+  }
+  if (spots <= 3) {
+    return (
+      <Badge className="bg-danger/15 text-danger border-transparent">
+        {spots} spots left
+      </Badge>
+    );
+  }
+  return (
+    <Badge className="bg-success/15 text-success border-transparent">
+      {spots} spots open
+    </Badge>
+  );
+}
 
 export default function Home() {
+  const [dark, setDark] = useState(false);
+
+  // Match system preference on first load without causing a hydration mismatch.
+  useEffect(() => {
+    const prefersDark = window.matchMedia(
+      "(prefers-color-scheme: dark)",
+    ).matches;
+    setDark(prefersDark);
+  }, []);
+
+  useEffect(() => {
+    document.documentElement.classList.toggle("dark", dark);
+  }, [dark]);
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-16 px-6 py-10 sm:py-16">
+      {/* Top bar */}
+      <header className="flex items-center justify-between">
+        <span className="text-lg font-semibold tracking-tight">
+          Peaches Lounge
+        </span>
+        <Button
+          variant="secondary"
+          size="icon"
+          aria-label="Toggle dark mode"
+          onClick={() => setDark((v) => !v)}
+        >
+          {dark ? (
+            <Sun className="size-5" weight="regular" />
+          ) : (
+            <Moon className="size-5" weight="regular" />
+          )}
+        </Button>
+      </header>
+
+      {/* Hero */}
+      <section className="flex flex-col gap-6">
+        <Badge
+          variant="secondary"
+          className="w-fit gap-1.5 rounded-full px-3 py-1 font-normal"
+        >
+          <MapPin className="size-3.5" weight="fill" />
+          Ambleside · West Vancouver
+        </Badge>
+        <h1 className="max-w-2xl text-4xl font-semibold leading-tight tracking-tight sm:text-5xl">
+          Pilates, yoga, and matcha — in one calm, curved little world.
+        </h1>
+        <p className="text-muted-foreground max-w-xl text-lg leading-relaxed">
+          Book a reformer class, flow through yoga, or just come for the matcha.
+          Community-first, premium, and never corporate.
+        </p>
+        <div className="flex flex-wrap items-center gap-3">
+          <Button size="lg" className="gap-2">
+            Book a class
+            <ArrowRight className="size-4" weight="bold" />
+          </Button>
+          <Button size="lg" variant="secondary">
+            View the schedule
+          </Button>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+      </section>
+
+      {/* This week */}
+      <section className="flex flex-col gap-5">
+        <div className="flex items-baseline justify-between">
+          <h2 className="text-2xl font-semibold tracking-tight">This week</h2>
+          <span className="text-muted-foreground text-sm">
+            10 reformers · 900 sq ft
+          </span>
         </div>
-      </main>
+        <div className="grid gap-4 sm:grid-cols-3">
+          {CLASSES.map((c) => (
+            <GlassCard key={c.name} className="flex flex-col gap-4">
+              <div className="flex items-center justify-between">
+                <span className="bg-primary text-primary-foreground flex size-10 items-center justify-center rounded-full">
+                  {c.icon}
+                </span>
+                {spotsBadge(c.spots)}
+              </div>
+              <div className="flex flex-col gap-1">
+                <h3 className="font-semibold">{c.name}</h3>
+                <span className="text-muted-foreground flex items-center gap-1.5 text-sm">
+                  <Clock className="size-3.5" weight="regular" />
+                  {c.time}
+                </span>
+                <span className="text-muted-foreground flex items-center gap-1.5 text-sm">
+                  <Users className="size-3.5" weight="regular" />
+                  {c.instructor}
+                </span>
+              </div>
+              <Button
+                variant={c.spots === 0 ? "secondary" : "default"}
+                className="w-full"
+              >
+                {c.spots === 0 ? "Join waitlist" : "Reserve spot"}
+              </Button>
+            </GlassCard>
+          ))}
+        </div>
+      </section>
+
+      {/* Waitlist form */}
+      <section>
+        <GlassCard className="flex flex-col gap-5 rounded-3xl sm:flex-row sm:items-end sm:justify-between">
+          <div className="flex flex-col gap-2">
+            <h2 className="text-xl font-semibold tracking-tight">
+              Join the founding members list
+            </h2>
+            <p className="text-muted-foreground text-sm">
+              Be first in line when the doors open. No spam — just your spot.
+            </p>
+          </div>
+          <form
+            className="flex w-full max-w-sm flex-col gap-3"
+            onSubmit={(e) => e.preventDefault()}
+          >
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="email">Email</Label>
+              <Input id="email" type="email" placeholder="you@example.com" />
+            </div>
+            <Button type="submit" className="w-full gap-2">
+              <CheckCircle className="size-4" weight="fill" />
+              Reserve my spot
+            </Button>
+          </form>
+        </GlassCard>
+      </section>
+
+      <footer className="text-muted-foreground border-border mt-auto border-t pt-6 text-sm">
+        Peaches Lounge · Pilates · Yoga · Matcha Bar — West Vancouver, BC
+      </footer>
     </div>
   );
 }
