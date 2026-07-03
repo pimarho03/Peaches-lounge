@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import {
   ArrowRight,
   Barbell,
@@ -74,16 +74,25 @@ function spotsBadge(spots: number) {
   );
 }
 
-export default function Home() {
-  const [dark, setDark] = useState(false);
+const DARK_QUERY = "(prefers-color-scheme: dark)";
 
-  // Match system preference on first load without causing a hydration mismatch.
-  useEffect(() => {
-    const prefersDark = window.matchMedia(
-      "(prefers-color-scheme: dark)",
-    ).matches;
-    setDark(prefersDark);
-  }, []);
+function subscribeToScheme(callback: () => void) {
+  const mql = window.matchMedia(DARK_QUERY);
+  mql.addEventListener("change", callback);
+  return () => mql.removeEventListener("change", callback);
+}
+
+export default function Home() {
+  // Track the live OS preference; server snapshot falls back to light to avoid
+  // a hydration mismatch. useSyncExternalStore avoids the set-state-in-effect
+  // re-render and keeps reacting to OS theme changes after mount.
+  const systemPrefersDark = useSyncExternalStore(
+    subscribeToScheme,
+    () => window.matchMedia(DARK_QUERY).matches,
+    () => false,
+  );
+  const [override, setOverride] = useState<boolean | null>(null);
+  const dark = override ?? systemPrefersDark;
 
   useEffect(() => {
     document.documentElement.classList.toggle("dark", dark);
@@ -100,7 +109,7 @@ export default function Home() {
           variant="secondary"
           size="icon"
           aria-label="Toggle dark mode"
-          onClick={() => setDark((v) => !v)}
+          onClick={() => setOverride((v) => !(v ?? systemPrefersDark))}
         >
           {dark ? (
             <Sun className="size-5" weight="regular" />
@@ -189,11 +198,27 @@ export default function Home() {
           </div>
           <form
             className="flex w-full max-w-sm flex-col gap-3"
-            onSubmit={(e) => e.preventDefault()}
+            onSubmit={(e) => {
+              e.preventDefault();
+              const email = new FormData(e.currentTarget)
+                .get("email")
+                ?.toString()
+                .trim();
+              if (!email) return;
+              // TODO: wire to the founding-members list backend.
+              console.log("Waitlist signup:", email);
+              e.currentTarget.reset();
+            }}
           >
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" placeholder="you@example.com" />
+              <Input
+                id="email"
+                name="email"
+                type="email"
+                required
+                placeholder="you@example.com"
+              />
             </div>
             <Button type="submit" className="w-full gap-2">
               <CheckCircle className="size-4" weight="fill" />

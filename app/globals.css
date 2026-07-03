@@ -61,7 +61,7 @@
 
 :root {
   /* radii.lg (28px) from the booking app is the card baseline; buttons go full. */
-  --radius: 1rem;
+  --radius: 1.75rem;
 
   /* Light — matte white. nude bg, white card surface. */
   --background: #efeff2; /* nude */
