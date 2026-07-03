@@ -52,6 +52,7 @@ const CLASSES: ClassItem[] = [
   },
 ];
 
+/** Render the availability badge for a class based on remaining spots. */
 function spotsBadge(spots: number) {
   if (spots === 0) {
     return (
@@ -76,12 +77,14 @@ function spotsBadge(spots: number) {
 
 const DARK_QUERY = "(prefers-color-scheme: dark)";
 
+/** Subscribe to OS dark-mode changes; returns an unsubscribe fn for useSyncExternalStore. */
 function subscribeToScheme(callback: () => void) {
   const mql = window.matchMedia(DARK_QUERY);
   mql.addEventListener("change", callback);
   return () => mql.removeEventListener("change", callback);
 }
 
+/** Peaches Lounge landing + booking preview: hero, weekly schedule, and waitlist. */
 export default function Home() {
   // Track the live OS preference; server snapshot falls back to light to avoid
   // a hydration mismatch. useSyncExternalStore avoids the set-state-in-effect
