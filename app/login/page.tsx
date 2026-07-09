@@ -15,6 +15,7 @@ import {
   WindowsLogo,
 } from "@phosphor-icons/react";
 
+import { BackButton } from "@/components/back-button";
 import { Button } from "@/components/ui/button";
 import { GlassCard } from "@/components/glass-card";
 import { Input } from "@/components/ui/input";
@@ -32,9 +33,11 @@ type Step =
   | { name: "password"; email: string; passkey: boolean }
   | { name: "mfa"; pendingToken: string }
   | { name: "email-code"; email: string; otpToken: string; devCode?: string }
-  | { name: "link-sent"; email: string; devLink?: string };
+  | { name: "link-sent"; email: string; devLink?: string }
+  | { name: "reset"; token: string };
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const MIN_PASSWORD_LENGTH = 10;
 
 function Spinner() {
   return <CircleNotch className="size-4 animate-spin" weight="bold" />;
@@ -76,12 +79,16 @@ function LoginForm() {
   const params = useSearchParams();
 
   const [step, setStep] = useState<Step>(() => {
+    // Reset links land here to set a new password.
+    const reset = params.get("reset");
+    if (reset) return { name: "reset", token: reset };
     // Magic-link logins for staff/admin land back here for their second factor.
     const mfa = params.get("mfa");
     return mfa ? { name: "mfa", pendingToken: mfa } : { name: "identify" };
   });
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
   const [code, setCode] = useState("");
   const [remember, setRemember] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -106,8 +113,10 @@ function LoginForm() {
       .catch(() => {});
   }, []);
 
-  // Already signed in? Skip the form entirely.
+  // Already signed in? Skip the form entirely — unless they're here to set a
+  // new password from a reset link, which should always let them finish.
   useEffect(() => {
+    if (params.get("reset")) return;
     fetch("/api/auth/session").then((r) => {
       if (r.ok) router.replace(params.get("next") ?? "/dashboard");
     });
@@ -297,6 +306,40 @@ function LoginForm() {
     }
   }
 
+  async function handleReset(e: React.FormEvent) {
+    e.preventDefault();
+    if (busy || step.name !== "reset") return;
+    if (newPassword.length < MIN_PASSWORD_LENGTH) {
+      setError(`Use at least ${MIN_PASSWORD_LENGTH} characters for your new password.`);
+      return;
+    }
+    setBusy("reset");
+    setError(null);
+    try {
+      const { data } = await post("/api/auth/reset-password", {
+        token: step.token,
+        password: newPassword,
+      });
+      if (!data.ok) {
+        setError(data.error ?? "Something went wrong. Please try again.");
+        if (data.restart) setStep({ name: "identify" });
+        return;
+      }
+      if (data.mfaRequired) {
+        setCode("");
+        setNewPassword("");
+        setStep({ name: "mfa", pendingToken: data.pendingToken });
+        return;
+      }
+      setNewPassword("");
+      finish(data.redirect);
+    } catch {
+      setError("We couldn't reach the server. Check your connection and try again.");
+    } finally {
+      setBusy(null);
+    }
+  }
+
   const backToStart = (
     <button
       type="button"
@@ -429,6 +472,73 @@ function LoginForm() {
             <Button type="submit" size="lg" className="w-full gap-2" disabled={busy !== null}>
               {busy === "identify" && <Spinner />}
               Continue
+            </Button>
+          </form>
+
+          <p className="text-muted-foreground text-center text-sm">
+            New to Peaches Lounge?{" "}
+            <a
+              href="/signup"
+              className="text-foreground font-medium underline underline-offset-2"
+            >
+              Create an account
+            </a>
+          </p>
+        </>
+      )}
+
+      {step.name === "reset" && (
+        <>
+          <div className="flex flex-col gap-1">
+            <h1 className="text-2xl font-semibold tracking-tight">Set a new password</h1>
+            <p className="text-muted-foreground text-sm">
+              Choose a new password to finish signing in.
+            </p>
+          </div>
+          <form onSubmit={handleReset} noValidate className="flex flex-col gap-4">
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="new-password">New password</Label>
+              <div className="relative">
+                <Input
+                  id="new-password"
+                  name="new-password"
+                  type={showPassword ? "text" : "password"}
+                  autoComplete="new-password"
+                  autoCapitalize="none"
+                  autoCorrect="off"
+                  spellCheck={false}
+                  autoFocus
+                  required
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  className="h-11 rounded-2xl px-4 pr-12"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((v) => !v)}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                  aria-pressed={showPassword}
+                  className="text-muted-foreground hover:text-foreground absolute inset-y-0 right-0 flex w-11 items-center justify-center transition-colors"
+                >
+                  {showPassword ? (
+                    <EyeSlash className="size-5" weight="regular" />
+                  ) : (
+                    <Eye className="size-5" weight="regular" />
+                  )}
+                </button>
+              </div>
+              <p className="text-muted-foreground text-sm">
+                At least {MIN_PASSWORD_LENGTH} characters — a short phrase works well.
+              </p>
+            </div>
+            <Button
+              type="submit"
+              size="lg"
+              className="w-full gap-2"
+              disabled={busy !== null || newPassword.length < MIN_PASSWORD_LENGTH}
+            >
+              {busy === "reset" && <Spinner />}
+              Set password &amp; sign in
             </Button>
           </form>
         </>
@@ -649,17 +759,20 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <main className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center gap-8 px-6 py-12">
-      {/* Wordmark only — no nav, no banners, no marketing. */}
-      <span className="text-center text-lg font-semibold tracking-tight">
-        Peaches Lounge
-      </span>
-      <Suspense>
-        <LoginForm />
-      </Suspense>
-      <p className="text-muted-foreground text-center text-xs leading-relaxed">
-        Protected by invisible risk checks — no puzzles, ever.
-      </p>
+    <main className="mx-auto flex w-full max-w-md flex-1 flex-col px-6 py-6">
+      <BackButton href="/" label="Back to home" />
+      <div className="flex flex-1 flex-col justify-center gap-8 py-6">
+        {/* Wordmark only — no nav, no banners, no marketing. */}
+        <span className="text-center text-lg font-semibold tracking-tight">
+          Peaches Lounge
+        </span>
+        <Suspense>
+          <LoginForm />
+        </Suspense>
+        <p className="text-muted-foreground text-center text-xs leading-relaxed">
+          Protected by invisible risk checks — no puzzles, ever.
+        </p>
+      </div>
     </main>
   );
 }

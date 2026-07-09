@@ -6,7 +6,12 @@ import {
   homeFor,
 } from "@/lib/auth/session";
 import { findUserByEmail, findUserById } from "@/lib/auth/store";
-import { consumeMagicLink, deliver, issueMagicLink } from "@/lib/auth/tokens";
+import {
+  consumeMagicLink,
+  deliver,
+  issueMagicLink,
+  peekLink,
+} from "@/lib/auth/tokens";
 
 /** Request a magic sign-in link — the password-forgotten escape hatch. */
 export async function POST(req: Request) {
@@ -47,8 +52,17 @@ export async function POST(req: Request) {
 export async function GET(req: Request) {
   const url = new URL(req.url);
   const tokenValue = url.searchParams.get("token") ?? "";
-  const token = consumeMagicLink(tokenValue);
 
+  // Reset links (issued on lockout) go to the set-new-password form instead
+  // of logging straight in — peek so the reset endpoint can consume it.
+  if (peekLink(tokenValue, "reset")) {
+    return Response.redirect(
+      new URL(`/login?reset=${tokenValue}`, url.origin),
+      303,
+    );
+  }
+
+  const token = consumeMagicLink(tokenValue);
   if (!token) {
     return Response.redirect(
       new URL("/login?error=link-expired", url.origin),

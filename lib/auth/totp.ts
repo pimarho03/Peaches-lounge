@@ -1,6 +1,6 @@
 import "server-only";
 
-import { createHmac, timingSafeEqual } from "node:crypto";
+import { createHmac, randomBytes, timingSafeEqual } from "node:crypto";
 
 /**
  * RFC 6238 TOTP (30s step, 6 digits, HMAC-SHA1) — compatible with Google
@@ -11,13 +11,52 @@ import { createHmac, timingSafeEqual } from "node:crypto";
 const STEP_SECONDS = 30;
 const DIGITS = 6;
 
+const BASE32_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
+
+function base32Encode(buf: Buffer): string {
+  let bits = 0;
+  let value = 0;
+  let out = "";
+  for (const byte of buf) {
+    value = (value << 8) | byte;
+    bits += 8;
+    while (bits >= 5) {
+      out += BASE32_ALPHABET[(value >>> (bits - 5)) & 31];
+      bits -= 5;
+    }
+  }
+  if (bits > 0) out += BASE32_ALPHABET[(value << (5 - bits)) & 31];
+  return out;
+}
+
+/** Fresh 160-bit base32 secret for a new authenticator enrollment. */
+export function generateTotpSecret(): string {
+  return base32Encode(randomBytes(20));
+}
+
+/**
+ * `otpauth://` URI an authenticator app scans from a QR code. The label
+ * carries the issuer + account so the app shows "Peaches Lounge (email)".
+ */
+export function totpUri(secretBase32: string, account: string): string {
+  const issuer = "Peaches Lounge";
+  const label = encodeURIComponent(`${issuer}:${account}`);
+  const params = new URLSearchParams({
+    secret: secretBase32,
+    issuer,
+    algorithm: "SHA1",
+    digits: "6",
+    period: "30",
+  });
+  return `otpauth://totp/${label}?${params.toString()}`;
+}
+
 function base32Decode(input: string): Buffer {
-  const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
   let bits = 0;
   let value = 0;
   const out: number[] = [];
   for (const ch of input.replace(/=+$/, "").toUpperCase()) {
-    const idx = alphabet.indexOf(ch);
+    const idx = BASE32_ALPHABET.indexOf(ch);
     if (idx === -1) continue;
     value = (value << 5) | idx;
     bits += 5;

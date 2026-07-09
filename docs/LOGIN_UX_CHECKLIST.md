@@ -42,6 +42,9 @@ console; in dev the link/code is also surfaced in the UI.
 | Single-column layout — stacked fields, labels above, helper text below | ✅ | `app/login/page.tsx` |
 | "Keep me logged in" — 30-day persistent session vs 12-hour default; browser-session cookie otherwise | ✅ | checkbox in `app/login/page.tsx`; `lib/auth/session.ts` |
 | Identity-first routing for roles — one URL, server routes client→/dashboard, staff→/staff, admin→/admin | ✅ | `homeFor()` in `lib/auth/session.ts`; guards in `lib/auth/guard.ts` |
+| Self-serve signup — `/signup` creates client accounts (staff/admin provisioned by admin); same bot check, rate limit, normalization, and UX rules | ✅ | `app/signup/page.tsx`, `app/api/auth/signup/route.ts` |
+| Password reset — lockout/reset link lands on a set-new-password form (not an instant login); length-first policy | ✅ | `app/api/auth/reset-password/route.ts`, reset step in `app/login/page.tsx`, `lib/auth/password.ts` |
+| Self-serve TOTP enrollment — signed-in QR-code setup, confirmed by a live code before the secret persists | ✅ | `app/api/auth/mfa/enroll/route.ts`, `components/account-panel.tsx` |
 
 ## Backend & security
 
@@ -69,4 +72,5 @@ The auth *flows* are complete; these swaps are needed for launch:
 - **Email delivery** — replace `deliver()` in `lib/auth/tokens.ts` (console logger) with Resend/Postmark/SES.
 - **SSO credentials** — set `GOOGLE_CLIENT_ID` / `APPLE_CLIENT_ID` / `MICROSOFT_CLIENT_ID` and implement the `/callback` token exchange per provider.
 - **Risk scoring** — optionally add Cloudflare Turnstile / reCAPTCHA v3 validation inside `assessRisk()` (`lib/auth/risk.ts`).
-- **TOTP enrollment UI** — secrets are seeded for demo staff/admin; production needs a QR-code enrollment screen and encrypted secret storage.
+- **TOTP secret storage** — the QR-code enrollment screen ships (`/api/auth/mfa/enroll`); production still needs to store the persisted secret encrypted at rest (it currently lives in the in-memory user record).
+- **Email verification** — signup creates a usable account immediately; add a "verify your email" step once the mail provider is connected if you want to gate booking on a confirmed address.
