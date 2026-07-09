@@ -1,0 +1,50 @@
+# CodeRabbit config — https://docs.coderabbit.ai/guides/configure-coderabbit
+# Tuned for the Peaches Lounge web app (Next.js 16 · React 19 · Tailwind v4 · shadcn/ui).
+language: "en-US"
+early_access: false
+
+reviews:
+  # "chill" = fewer nitpicks, focuses on real issues. Good while moving fast.
+  profile: "chill"
+  request_changes_workflow: false
+  high_level_summary: true
+  review_status: true
+  poem: false
+  collapse_walkthrough: false
+  auto_review:
+    enabled: true
+    drafts: false
+    base_branches:
+      - "main"
+
+  # Brand + code rules CodeRabbit should actively check for, per file type.
+  path_instructions:
+    - path: "**/*.tsx"
+      instructions: >-
+        This is the Peaches Lounge brand. Enforce the design system:
+        (1) Zero sharp corners — interactive elements should be rounded
+        (buttons are pill / rounded-full, cards rounded-3xl). Flag any
+        rounded-none or square corners.
+        (2) Monochrome by default. Color (success/warning/danger/info) is
+        reserved ONLY for small status elements like badges and toasts —
+        flag colored backgrounds used for large surfaces or decoration.
+        (3) Use design tokens (bg-primary, text-muted-foreground, border-border,
+        bg-card) — flag hard-coded hex colors in className.
+        (4) Accessibility: interactive elements need accessible labels
+        (aria-label on icon-only buttons, htmlFor/id on inputs+labels, alt on images).
+    - path: "app/**/*.tsx"
+      instructions: >-
+        Next.js 16 App Router. Client components must declare "use client" when
+        they use hooks or browser APIs. Prefer Server Components by default.
+        Flag secrets or private keys committed to client components.
+    - path: "**/*.{ts,tsx}"
+      instructions: >-
+        TypeScript: flag `any`, unhandled promise rejections, and missing
+        error handling on network / Supabase calls.
+
+  # shadcn/ui primitives are vendored, near-verbatim from upstream — skip them.
+  path_filters:
+    - "!components/ui/**"
+
+chat:
+  auto_reply: true
