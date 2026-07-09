@@ -144,3 +144,39 @@ export function findUserById(id: string): User | undefined {
   for (const u of db().users.values()) if (u.id === id) return u;
   return undefined;
 }
+
+/**
+ * Self-serve registration. Only ever creates `client` accounts — staff and
+ * admin are provisioned by an admin, never self-signup, so the role can't be
+ * escalated from the public form. `email` must already be normalized.
+ */
+export function createUser(input: {
+  email: string;
+  name: string;
+  password: string;
+}): User {
+  const user: User = {
+    id: `user_${randomId()}`,
+    email: input.email,
+    name: input.name,
+    role: "client",
+    passwordHash: bcrypt.hashSync(input.password, 10),
+    totpSecret: null,
+    passkeys: [],
+    knownDevices: new Set(),
+  };
+  db().users.set(user.email, user);
+  return user;
+}
+
+/** Replace a user's password hash (reset flow). */
+export function setPassword(user: User, password: string): void {
+  user.passwordHash = bcrypt.hashSync(password, 10);
+}
+
+let idCounter = 0;
+/** Monotonic id source — avoids Math.random (unavailable in some contexts). */
+function randomId(): string {
+  idCounter += 1;
+  return `${db().users.size + 1}_${idCounter}`;
+}

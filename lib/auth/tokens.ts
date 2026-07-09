@@ -46,6 +46,23 @@ export function consumeMagicLink(tokenValue: string): OneTimeToken | null {
   return token;
 }
 
+/**
+ * Validate a link token without consuming it — used to hand a reset token
+ * off to the set-new-password form, which consumes it on submit.
+ */
+export function peekLink(
+  tokenValue: string,
+  purpose: OneTimeToken["purpose"],
+): OneTimeToken | null {
+  const token = db().oneTimeTokens.get(tokenValue);
+  if (!token || token.purpose !== purpose) return null;
+  if (Date.now() > token.expiresAt) {
+    db().oneTimeTokens.delete(tokenValue);
+    return null;
+  }
+  return token;
+}
+
 export type OtpOutcome =
   | { result: "ok"; userId: string }
   | { result: "wrong-code" | "expired" | "too-many-attempts" };

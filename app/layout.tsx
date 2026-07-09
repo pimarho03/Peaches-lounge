@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
-import { Inter, Geist_Mono } from "next/font/google";
+import { Inter, Geist_Mono, Sacramento } from "next/font/google";
 import "./globals.css";
+
+import { BrandSplash } from "@/components/brand-splash";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -10,6 +12,13 @@ const inter = Inter({
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
+});
+
+// Cursive script used only for the handwriting splash wordmark.
+const sacramento = Sacramento({
+  variable: "--font-script",
+  subsets: ["latin"],
+  weight: "400",
 });
 
 export const metadata: Metadata = {
@@ -27,9 +36,12 @@ export default function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className={`${inter.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${inter.variable} ${geistMono.variable} ${sacramento.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        <BrandSplash />
+        {children}
+      </body>
     </html>
   );
 }
