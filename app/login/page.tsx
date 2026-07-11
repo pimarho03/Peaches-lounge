@@ -3,6 +3,7 @@
 import { Suspense, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { startAuthentication } from "@simplewebauthn/browser";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import {
   AppleLogo,
   ArrowLeft,
@@ -123,6 +124,23 @@ function LoginForm() {
   }, [router, params]);
 
   const honeypotRef = useRef<HTMLInputElement>(null);
+
+  // Step transitions: a critically-damped spring (Apple's default for
+  // non-momentum UI — bounce 0, ~0.3s response), degrading to a plain
+  // cross-fade under prefers-reduced-motion. Motion animates from the live
+  // presentation value, so a fast stepper stays interruptible instead of
+  // jumping. (apple-design §4, §7, §14)
+  const prefersReduced = useReducedMotion();
+  const stepVariants = prefersReduced
+    ? { initial: { opacity: 0 }, animate: { opacity: 1 }, exit: { opacity: 0 } }
+    : {
+        initial: { opacity: 0, y: 8, scale: 0.99 },
+        animate: { opacity: 1, y: 0, scale: 1 },
+        exit: { opacity: 0, y: -8, scale: 0.99 },
+      };
+  const stepTransition = prefersReduced
+    ? { duration: 0.15 }
+    : ({ type: "spring", bounce: 0, duration: 0.32 } as const);
 
   async function post(url: string, body: unknown, method = "POST") {
     const res = await fetch(url, {
@@ -372,6 +390,18 @@ function LoginForm() {
       <Notice>{notice}</Notice>
       <FormError>{error}</FormError>
 
+      {/* One step is mounted at a time; keying by step.name lets Motion
+          cross-fade + spring between them (apple-design §3 interruptibility). */}
+      <AnimatePresence mode="wait" initial={false}>
+        <motion.div
+          key={step.name}
+          variants={stepVariants}
+          initial="initial"
+          animate="animate"
+          exit="exit"
+          transition={stepTransition}
+          className="flex flex-col gap-6"
+        >
       {step.name === "identify" && (
         <>
           <div className="flex flex-col gap-1">
@@ -753,6 +783,8 @@ function LoginForm() {
           {backToStart}
         </>
       )}
+        </motion.div>
+      </AnimatePresence>
     </GlassCard>
   );
 }
