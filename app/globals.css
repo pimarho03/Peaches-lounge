@@ -246,7 +246,9 @@
 }
 
 .pl-splash--leaving {
-  animation: pl-fade-out 0.6s ease forwards;
+  /* Recede + fade so the splash reads as a material lifting away and the app
+     arriving underneath, not a flat opacity dissolve (apple-design §12). */
+  animation: pl-fade-out 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
 
 @keyframes pl-draw {
@@ -265,6 +267,7 @@
   to {
     opacity: 0;
     visibility: hidden;
+    transform: scale(1.06);
   }
 }
 
@@ -275,5 +278,16 @@
     fill: #ffffff;
     stroke-width: 0;
     stroke-dashoffset: 0;
+  }
+  .pl-splash--leaving {
+    /* Cross-fade only — no vestibular scale movement (apple-design §14). */
+    animation: pl-fade-out-reduced 0.4s ease forwards;
+  }
+}
+
+@keyframes pl-fade-out-reduced {
+  to {
+    opacity: 0;
+    visibility: hidden;
   }
 }
