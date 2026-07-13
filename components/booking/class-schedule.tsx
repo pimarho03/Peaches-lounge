@@ -46,7 +46,12 @@ function StateButton({
 }) {
   if (classItem.myStatus === "booked") {
     return (
-      <Button variant="outline" size="sm" className="gap-1.5" onClick={onCancel}>
+      <Button
+        variant="outline"
+        size="sm"
+        className="shrink-0 gap-1.5 px-4"
+        onClick={onCancel}
+      >
         <CheckCircle className="size-4" weight="fill" />
         Booked
       </Button>
@@ -54,7 +59,7 @@ function StateButton({
   }
   if (classItem.myStatus === "waitlisted") {
     return (
-      <Button variant="secondary" size="sm" onClick={onLeaveWaitlist}>
+      <Button variant="secondary" size="sm" className="shrink-0 px-4" onClick={onLeaveWaitlist}>
         Waitlisted{" "}
         {classItem.myWaitlistPosition ? `#${classItem.myWaitlistPosition}` : ""}
       </Button>
@@ -62,13 +67,13 @@ function StateButton({
   }
   if (classItem.spotsLeft > 0) {
     return (
-      <Button size="sm" onClick={onBook}>
+      <Button size="sm" className="shrink-0 px-4" onClick={onBook}>
         Book
       </Button>
     );
   }
   return (
-    <Button variant="secondary" size="sm" onClick={onWaitlist}>
+    <Button variant="secondary" size="sm" className="shrink-0 px-4" onClick={onWaitlist}>
       Waitlist
     </Button>
   );
@@ -91,11 +96,11 @@ function ClassCard({
         <span className="text-muted-foreground text-xs">{classItem.durationMin} min</span>
       </div>
 
-      <div className="flex flex-1 flex-col gap-1">
-        <span className="font-semibold tracking-tight">{classItem.title}</span>
-        <div className="flex items-center gap-2 text-sm">
-          <span className="text-muted-foreground">{classItem.instructor}</span>
-          <Badge variant="secondary" className="capitalize">
+      <div className="flex min-w-0 flex-1 flex-col gap-1">
+        <span className="truncate font-semibold tracking-tight">{classItem.title}</span>
+        <div className="flex min-w-0 items-center gap-2 text-sm">
+          <span className="text-muted-foreground truncate">{classItem.instructor}</span>
+          <Badge variant="secondary" className="shrink-0 capitalize">
             {classItem.type}
           </Badge>
         </div>

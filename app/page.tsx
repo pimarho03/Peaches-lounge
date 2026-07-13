@@ -9,7 +9,6 @@ import {
   Clock,
   Coffee,
   Flower,
-  MapPin,
   Moon,
   Sun,
   Users,
@@ -17,6 +16,7 @@ import {
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { BrandWordmark } from "@/components/brand-wordmark";
 import { GlassCard } from "@/components/glass-card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -107,9 +107,7 @@ export default function Home() {
     <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-16 px-6 py-10 sm:py-16">
       {/* Top bar */}
       <header className="flex items-center justify-between">
-        <span className="text-lg font-semibold tracking-tight">
-          Peaches Lounge
-        </span>
+        <BrandWordmark />
         <div className="flex items-center gap-2">
           <Button
             variant="secondary"
@@ -131,13 +129,6 @@ export default function Home() {
 
       {/* Hero */}
       <section className="flex flex-col gap-6">
-        <Badge
-          variant="secondary"
-          className="w-fit gap-1.5 rounded-full px-3 py-1 font-normal"
-        >
-          <MapPin className="size-3.5" weight="fill" />
-          Ambleside · West Vancouver
-        </Badge>
         <h1 className="max-w-2xl text-4xl font-semibold leading-tight tracking-tight sm:text-5xl">
           Pilates, yoga, and matcha — in one calm, curved little world.
         </h1>
@@ -164,9 +155,6 @@ export default function Home() {
       <section className="flex flex-col gap-5">
         <div className="flex items-baseline justify-between">
           <h2 className="text-2xl font-semibold tracking-tight">This week</h2>
-          <span className="text-muted-foreground text-sm">
-            10 reformers · 900 sq ft
-          </span>
         </div>
         <div className="grid gap-4 sm:grid-cols-3">
           {CLASSES.map((c) => (

@@ -39,6 +39,14 @@ export default function RootLayout({
       className={`${inter.variable} ${geistMono.variable} ${sacramento.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
+        {/* Dark mode is class-based (`.dark` on <html>) so pages can override
+            it, but every page must still follow the OS preference on direct
+            load. Runs before paint to avoid a light flash in dark mode. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){var m=window.matchMedia("(prefers-color-scheme: dark)");function s(){document.documentElement.classList.toggle("dark",m.matches)}s();m.addEventListener("change",s)})()`,
+          }}
+        />
         <BrandSplash />
         {children}
       </body>
