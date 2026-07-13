@@ -96,12 +96,29 @@ function LoginForm() {
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [emailError, setEmailError] = useState<string | null>(null);
+  const errorParam = params.get("error");
+  const noticeParam = params.get("notice");
+  // Friendly, non-alarming copy for the redirect-based SSO outcomes. Hard
+  // failures render in the error tone (FormError); cancels and step-ups are
+  // gentle notices.
+  const ssoError =
+    errorParam === "sso-failed"
+      ? "We couldn't finish signing you in with that provider. Please try again, or use your email below."
+      : errorParam === "sso-unverified"
+        ? "That account's email isn't verified with the provider, so we can't sign you in this way. Use your email below instead."
+        : errorParam === "sso-unsupported"
+          ? "That sign-in provider isn't supported yet — use your email below."
+          : null;
   const notice =
-    params.get("error") === "link-expired"
+    errorParam === "link-expired"
       ? "That sign-in link expired or was already used. Request a fresh one below."
-      : params.get("notice") === "sso-not-configured"
+      : noticeParam === "sso-not-configured"
         ? `Sign-in with ${params.get("provider") ?? "that provider"} isn't connected yet — use your email below.`
-        : null;
+        : noticeParam === "sso-cancelled"
+          ? "Sign-in was cancelled — no changes made. You can try again below."
+          : noticeParam === "sso-mfa-required"
+            ? "Almost there — finish signing in with your email and authenticator code below."
+            : null;
 
   // Signed form-timing token for the invisible bot check.
   const formTokenRef = useRef<string>("");
@@ -388,7 +405,7 @@ function LoginForm() {
       />
 
       <Notice>{notice}</Notice>
-      <FormError>{error}</FormError>
+      <FormError>{error ?? ssoError}</FormError>
 
       {/* One step is mounted at a time; keying by step.name lets Motion
           cross-fade + spring between them (apple-design §3 interruptibility). */}

@@ -169,6 +169,38 @@ export function createUser(input: {
   return user;
 }
 
+/**
+ * Sentinel password hash for SSO-only accounts. It is deliberately NOT a valid
+ * bcrypt hash, so `bcrypt.compare(anyPassword, SSO_SENTINEL)` always resolves
+ * `false` — there is no password that can ever authenticate an SSO account
+ * through the password flow. (Verified against bcryptjs: comparing any string
+ * to a non-hash returns false rather than throwing.)
+ */
+const SSO_SENTINEL = "!sso-no-password";
+
+/**
+ * Create (or return) a `client` account for a verified SSO identity. Like
+ * `createUser` it never mints staff/admin — role escalation can't come through
+ * a social login. `email` must already be normalized. The account has no usable
+ * password (see `SSO_SENTINEL`); the user signs in only via their provider.
+ */
+export function createSsoUser(input: { email: string; name: string }): User {
+  const existing = db().users.get(input.email);
+  if (existing) return existing;
+  const user: User = {
+    id: `user_${randomId()}`,
+    email: input.email,
+    name: input.name,
+    role: "client",
+    passwordHash: SSO_SENTINEL,
+    totpSecret: null,
+    passkeys: [],
+    knownDevices: new Set(),
+  };
+  db().users.set(user.email, user);
+  return user;
+}
+
 /** Replace a user's password hash (reset flow). */
 export function setPassword(user: User, password: string): void {
   user.passwordHash = bcrypt.hashSync(password, 10);
