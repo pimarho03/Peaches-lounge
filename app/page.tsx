@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useSyncExternalStore } from "react";
+import Link from "next/link";
 import {
   ArrowRight,
   Barbell,
@@ -8,7 +9,6 @@ import {
   Clock,
   Coffee,
   Flower,
-  MapPin,
   Moon,
   Sun,
   Users,
@@ -16,6 +16,7 @@ import {
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { BrandWordmark } from "@/components/brand-wordmark";
 import { GlassCard } from "@/components/glass-card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -96,6 +97,7 @@ export default function Home() {
   );
   const [override, setOverride] = useState<boolean | null>(null);
   const dark = override ?? systemPrefersDark;
+  const [joined, setJoined] = useState(false);
 
   useEffect(() => {
     document.documentElement.classList.toggle("dark", dark);
@@ -105,32 +107,28 @@ export default function Home() {
     <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-16 px-6 py-10 sm:py-16">
       {/* Top bar */}
       <header className="flex items-center justify-between">
-        <span className="text-lg font-semibold tracking-tight">
-          Peaches Lounge
-        </span>
-        <Button
-          variant="secondary"
-          size="icon"
-          aria-label="Toggle dark mode"
-          onClick={() => setOverride((v) => !(v ?? systemPrefersDark))}
-        >
-          {dark ? (
-            <Sun className="size-5" weight="regular" />
-          ) : (
-            <Moon className="size-5" weight="regular" />
-          )}
-        </Button>
+        <BrandWordmark />
+        <div className="flex items-center gap-2">
+          <Button
+            variant="secondary"
+            size="icon"
+            aria-label="Toggle dark mode"
+            onClick={() => setOverride((v) => !(v ?? systemPrefersDark))}
+          >
+            {dark ? (
+              <Sun className="size-5" weight="regular" />
+            ) : (
+              <Moon className="size-5" weight="regular" />
+            )}
+          </Button>
+          <Button variant="secondary" asChild>
+            <Link href="/login">Sign in</Link>
+          </Button>
+        </div>
       </header>
 
       {/* Hero */}
       <section className="flex flex-col gap-6">
-        <Badge
-          variant="secondary"
-          className="w-fit gap-1.5 rounded-full px-3 py-1 font-normal"
-        >
-          <MapPin className="size-3.5" weight="fill" />
-          Ambleside · West Vancouver
-        </Badge>
         <h1 className="max-w-2xl text-4xl font-semibold leading-tight tracking-tight sm:text-5xl">
           Pilates, yoga, and matcha — in one calm, curved little world.
         </h1>
@@ -139,12 +137,16 @@ export default function Home() {
           Community-first, premium, and never corporate.
         </p>
         <div className="flex flex-wrap items-center gap-3">
-          <Button size="lg" className="gap-2">
-            Book a class
-            <ArrowRight className="size-4" weight="bold" />
+          {/* /dashboard is role-guarded: signed-out visitors land on /login,
+              signed-in members go straight to the schedule. */}
+          <Button size="lg" className="gap-2" asChild>
+            <Link href="/dashboard">
+              Book a class
+              <ArrowRight className="size-4" weight="bold" />
+            </Link>
           </Button>
-          <Button size="lg" variant="secondary">
-            View the schedule
+          <Button size="lg" variant="secondary" asChild>
+            <Link href="/dashboard">View the schedule</Link>
           </Button>
         </div>
       </section>
@@ -153,9 +155,6 @@ export default function Home() {
       <section className="flex flex-col gap-5">
         <div className="flex items-baseline justify-between">
           <h2 className="text-2xl font-semibold tracking-tight">This week</h2>
-          <span className="text-muted-foreground text-sm">
-            10 reformers · 900 sq ft
-          </span>
         </div>
         <div className="grid gap-4 sm:grid-cols-3">
           {CLASSES.map((c) => (
@@ -180,8 +179,11 @@ export default function Home() {
               <Button
                 variant={c.spots === 0 ? "secondary" : "default"}
                 className="w-full"
+                asChild
               >
-                {c.spots === 0 ? "Join waitlist" : "Reserve spot"}
+                <Link href="/dashboard">
+                  {c.spots === 0 ? "Join waitlist" : "Reserve spot"}
+                </Link>
               </Button>
             </GlassCard>
           ))}
@@ -199,35 +201,44 @@ export default function Home() {
               Be first in line when the doors open. No spam — just your spot.
             </p>
           </div>
-          <form
-            className="flex w-full max-w-sm flex-col gap-3"
-            onSubmit={(e) => {
-              e.preventDefault();
-              const email = new FormData(e.currentTarget)
-                .get("email")
-                ?.toString()
-                .trim();
-              if (!email) return;
-              // TODO: wire to the founding-members list backend.
-              console.log("Waitlist signup:", email);
-              e.currentTarget.reset();
-            }}
-          >
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                name="email"
-                type="email"
-                required
-                placeholder="you@example.com"
-              />
+          {joined ? (
+            <div
+              role="status"
+              className="text-success flex w-full max-w-sm items-center gap-2 text-sm font-medium"
+            >
+              <CheckCircle className="size-5" weight="fill" />
+              You&apos;re on the list — we&apos;ll be in touch.
             </div>
-            <Button type="submit" className="w-full gap-2">
-              <CheckCircle className="size-4" weight="fill" />
-              Reserve my spot
-            </Button>
-          </form>
+          ) : (
+            <form
+              className="flex w-full max-w-sm flex-col gap-3"
+              onSubmit={(e) => {
+                e.preventDefault();
+                const email = new FormData(e.currentTarget)
+                  .get("email")
+                  ?.toString()
+                  .trim();
+                if (!email) return;
+                // TODO: wire to the founding-members list backend.
+                setJoined(true);
+              }}
+            >
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  name="email"
+                  type="email"
+                  required
+                  placeholder="you@example.com"
+                />
+              </div>
+              <Button type="submit" className="w-full gap-2">
+                <CheckCircle className="size-4" weight="fill" />
+                Reserve my spot
+              </Button>
+            </form>
+          )}
         </GlassCard>
       </section>
 
