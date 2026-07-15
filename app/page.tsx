@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState, useSyncExternalStore } from "react";
-import Link from "next/link";
 import {
   ArrowRight,
   Barbell,
@@ -121,8 +120,11 @@ export default function Home() {
               <Moon className="size-5" weight="regular" />
             )}
           </Button>
+          {/* TODO(owner): swap for the real Instagram handle before launch. */}
           <Button variant="secondary" asChild>
-            <Link href="/login">Sign in</Link>
+            <a href="https://instagram.com/" target="_blank" rel="noreferrer">
+              Instagram
+            </a>
           </Button>
         </div>
       </header>
@@ -137,18 +139,21 @@ export default function Home() {
           Community-first, premium, and never corporate.
         </p>
         <div className="flex flex-wrap items-center gap-3">
-          {/* /dashboard is role-guarded: signed-out visitors land on /login,
-              signed-in members go straight to the schedule. */}
+          {/* The booking app is coming soon (iOS, TestFlight) — these point
+              at the founding-members waitlist below instead of /dashboard. */}
           <Button size="lg" className="gap-2" asChild>
-            <Link href="/dashboard">
+            <a href="#waitlist">
               Book a class
               <ArrowRight className="size-4" weight="bold" />
-            </Link>
+            </a>
           </Button>
           <Button size="lg" variant="secondary" asChild>
-            <Link href="/dashboard">View the schedule</Link>
+            <a href="#waitlist">View the schedule</a>
           </Button>
         </div>
+        <p className="text-muted-foreground text-sm">
+          App coming soon — join the founding members list below to be first in.
+        </p>
       </section>
 
       {/* This week */}
@@ -181,9 +186,9 @@ export default function Home() {
                 className="w-full"
                 asChild
               >
-                <Link href="/dashboard">
+                <a href="#waitlist">
                   {c.spots === 0 ? "Join waitlist" : "Reserve spot"}
-                </Link>
+                </a>
               </Button>
             </GlassCard>
           ))}
@@ -191,7 +196,7 @@ export default function Home() {
       </section>
 
       {/* Waitlist form */}
-      <section>
+      <section id="waitlist">
         <GlassCard className="flex flex-col gap-5 rounded-3xl sm:flex-row sm:items-end sm:justify-between">
           <div className="flex flex-col gap-2">
             <h2 className="text-xl font-semibold tracking-tight">
