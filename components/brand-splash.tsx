@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 
 /**
  * Apple-"hello"-style handwriting intro. Reveals the owner's real "Peaches
@@ -60,14 +60,6 @@ export function BrandSplash({
   // Start hidden so repeat navigations never flash the splash; the effect
   // decides on mount whether this session should see it.
   const [state, setState] = useState<"hidden" | "playing" | "leaving">("hidden");
-  const revealRef = useRef<SVGPathElement>(null);
-
-  // pathLength normalization is unreliable inside <mask> in some engines, so
-  // measure the real centerline length and drive the dash off a CSS variable.
-  useEffect(() => {
-    const el = revealRef.current;
-    if (el) el.style.setProperty("--pl-len", String(el.getTotalLength()));
-  }, [state]);
 
   const drawSeconds = duration ?? DEFAULT_DRAW_SECONDS;
   const fillDelaySeconds = drawSeconds * FILL_DELAY_RATIO;
@@ -127,7 +119,6 @@ export function BrandSplash({
         <defs>
           <mask id="pl-reveal-mask" maskUnits="userSpaceOnUse">
             <path
-              ref={revealRef}
               d={CENTERLINE_D}
               fill="none"
               stroke="#fff"
@@ -139,7 +130,7 @@ export function BrandSplash({
           </mask>
         </defs>
         <g mask="url(#pl-reveal-mask)" className="pl-splash-letters">
-          <g transform={LOGO_TRANSFORM} fill="currentColor" fillRule="evenodd" stroke="none">
+          <g transform={LOGO_TRANSFORM} fill="currentColor" fillRule="evenodd" stroke="currentColor" strokeWidth={220} strokeLinejoin="round">
             {LOGO_PATHS.map((d, i) => (
               <path key={i} d={d} />
             ))}

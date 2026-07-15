@@ -252,7 +252,7 @@
      of viewport width capped in px rather than the old vw/px pair, to keep
      the wordmark occupying roughly the same visual footprint (~70vw, capped
      ~900px) as before. */
-  width: min(70vw, 900px);
+  width: min(52vw, 620px);
   height: auto;
   overflow: visible;
 }
@@ -267,8 +267,8 @@
   /* --pl-len is set from JS via getTotalLength() — measured real units are
      the only dash basis that behaves identically across engines inside a
      <mask>. The 4000 fallback approximates the traced length. */
-  stroke-dasharray: var(--pl-len, 4000);
-  stroke-dashoffset: var(--pl-len, 4000);
+  stroke-dasharray: 2973;
+  stroke-dashoffset: 2973;
   animation: pl-reveal var(--pl-draw-duration, 2.4s) cubic-bezier(0.66, 0, 0.34, 1) forwards;
 }
 
