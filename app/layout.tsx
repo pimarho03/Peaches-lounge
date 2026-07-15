@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter, Geist_Mono, Sacramento } from "next/font/google";
 import "./globals.css";
 
@@ -21,10 +21,31 @@ const sacramento = Sacramento({
   weight: "400",
 });
 
+const SITE_DESCRIPTION =
+  "Peaches Lounge is a reformer Pilates, yoga, and matcha bar in West Vancouver — a calm, curved little world built for genuine community, not just a workout.";
+
 export const metadata: Metadata = {
-  title: "Peaches Lounge — Pilates · Yoga · Matcha",
-  description:
-    "Book reformer Pilates, yoga, and meditation at Peaches Lounge. Community-first, premium, and calm.",
+  title: "Peaches Lounge — Pilates, Yoga & Matcha Bar in West Vancouver",
+  description: SITE_DESCRIPTION,
+  robots: {
+    index: true,
+    follow: true,
+  },
+  openGraph: {
+    title: "Peaches Lounge — Pilates, Yoga & Matcha Bar in West Vancouver",
+    description: SITE_DESCRIPTION,
+    url: "https://peacheslounge.com",
+    siteName: "Peaches Lounge",
+    locale: "en_CA",
+    type: "website",
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#efeff2" },
+    { media: "(prefers-color-scheme: dark)", color: "#181818" },
+  ],
 };
 
 export default function RootLayout({
