@@ -6,11 +6,11 @@ import { NextResponse, type NextRequest } from "next/server";
  * intact (untouched) so it can be re-enabled at launch — this just blocks
  * public access to it in the meantime.
  *
- * Controlled by NEXT_PUBLIC_APP_SURFACES: "on" re-enables the app surfaces
+ * Controlled by APP_SURFACES: "on" re-enables the app surfaces
  * (local dev), anything else (including unset, the production default)
  * keeps them gated.
  */
-const APP_SURFACES_ON = process.env.NEXT_PUBLIC_APP_SURFACES === "on";
+const APP_SURFACES_ON = process.env.APP_SURFACES === "on";
 
 const GATED_PAGE_PREFIXES = ["/login", "/signup", "/dashboard", "/staff", "/admin"];
 const GATED_API_PREFIXES = ["/api/auth", "/api/bookings", "/api/classes"];
@@ -37,8 +37,9 @@ export function proxy(request: NextRequest) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
     if (isUnderAnyPrefix(pathname, GATED_PAGE_PREFIXES)) {
-      // 308: permanent-feeling but fully reversible once app surfaces flip on.
-      return NextResponse.redirect(new URL("/", request.url), 308);
+      // 307: temporary redirect — browsers cache 308s indefinitely, which would
+      // keep redirecting returning visitors even after launch flips the flag.
+      return NextResponse.redirect(new URL("/", request.url), 307);
     }
   }
 
