@@ -110,6 +110,12 @@
   --sidebar-accent-foreground: #161616;
   --sidebar-border: #dedee2;
   --sidebar-ring: #a0a0a6;
+
+  /* Splash overlay (components/brand-splash.tsx): black lettering on white
+     in light mode, inverted in .dark below. Same var mechanism as every
+     other themed token on this page — no JS duplication. */
+  --pl-splash-bg: #ffffff;
+  --pl-splash-ink: #111111;
 }
 
 .dark {
@@ -159,6 +165,10 @@
   --sidebar-accent-foreground: #f2f2f2;
   --sidebar-border: #323234;
   --sidebar-ring: #5a5a5e;
+
+  /* Splash overlay: white lettering on black in dark mode. */
+  --pl-splash-bg: #111111;
+  --pl-splash-ink: #ffffff;
 }
 
 @layer base {
@@ -211,8 +221,20 @@
 
 /*
   Brand handwriting splash (components/brand-splash.tsx). Apple-"hello"-style:
-  the wordmark is "written" on with an SVG stroke-draw, filled, then the whole
-  overlay lifts away. Deep #111111 to match the app's login surface.
+  the owner's vector-traced wordmark is revealed through an animated <mask>
+  that sweeps a thick round-capped stroke along the wordmark's handwriting
+  centerline — draw and fill happen together as the mask travels, then the
+  whole overlay lifts away. Colors follow --pl-splash-bg/--pl-splash-ink, the
+  same :root/.dark variable mechanism as the rest of the theme (defined
+  above) — white-on-black in dark mode, black-on-white in light mode.
+  Whatever element has the .dark class (html on the real site, or a wrapper
+  div on the /splash-preview tuning page) drives it, since it's plain CSS
+  inheritance.
+
+  Draw timing defaults to the original 2.4s via the --pl-draw-duration
+  custom property with that fallback — components/brand-splash.tsx only
+  sets it explicitly when its optional `duration` prop is used (the
+  /splash-preview page).
 */
 .pl-splash {
   position: fixed;
@@ -221,29 +243,33 @@
   display: grid;
   place-items: center;
   padding: 2rem;
-  background: #111111;
+  background: var(--pl-splash-bg);
 }
 
 .pl-splash-svg {
-  width: min(76vw, 620px);
+  /* Wordmark viewBox is 2824.787549 x 717.380775 (≈3.94:1) — wider than the
+     old Pacifico <text> box (1000x340, ≈2.94:1), so it's sized as a fraction
+     of viewport width capped in px rather than the old vw/px pair, to keep
+     the wordmark occupying roughly the same visual footprint (~70vw, capped
+     ~900px) as before. */
+  width: min(70vw, 900px);
   height: auto;
   overflow: visible;
 }
 
-.pl-splash-word {
-  font-family: var(--font-script), cursive;
-  font-size: 150px;
-  fill: transparent;
-  stroke: #ffffff;
-  stroke-width: 2.25;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  /* One dash spanning the whole wordmark, offset so it starts fully hidden. */
-  stroke-dasharray: 5000;
-  stroke-dashoffset: 5000;
-  animation:
-    pl-draw 2.4s cubic-bezier(0.66, 0, 0.34, 1) forwards,
-    pl-fill 0.7s ease-out 2s forwards;
+.pl-splash-letters {
+  /* Letterform paths use fill="currentColor" — this drives that color
+     through the same theme variable the old stroke/fill used. */
+  color: var(--pl-splash-ink);
+}
+
+.pl-splash-reveal {
+  /* --pl-len is set from JS via getTotalLength() — measured real units are
+     the only dash basis that behaves identically across engines inside a
+     <mask>. The 4000 fallback approximates the traced length. */
+  stroke-dasharray: var(--pl-len, 4000);
+  stroke-dashoffset: var(--pl-len, 4000);
+  animation: pl-reveal var(--pl-draw-duration, 2.4s) cubic-bezier(0.66, 0, 0.34, 1) forwards;
 }
 
 .pl-splash--leaving {
@@ -252,15 +278,9 @@
   animation: pl-fade-out 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
 
-@keyframes pl-draw {
+@keyframes pl-reveal {
   to {
     stroke-dashoffset: 0;
-  }
-}
-
-@keyframes pl-fill {
-  to {
-    fill: #ffffff;
   }
 }
 
@@ -273,11 +293,10 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .pl-splash-word {
-    /* No writing animation — show the finished wordmark, still and filled. */
+  .pl-splash-reveal {
+    /* No writing animation — mask stroke is already fully drawn, so the
+       wordmark shows finished and filled immediately. */
     animation: none;
-    fill: #ffffff;
-    stroke-width: 0;
     stroke-dashoffset: 0;
   }
   .pl-splash--leaving {

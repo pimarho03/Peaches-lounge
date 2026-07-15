@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState, useSyncExternalStore } from "react";
+import Image from "next/image";
+import Link from "next/link";
 import {
   ArrowRight,
   Barbell,
@@ -15,7 +17,6 @@ import {
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { BrandWordmark } from "@/components/brand-wordmark";
 import { GlassCard } from "@/components/glass-card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -106,7 +107,16 @@ export default function Home() {
     <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-16 px-6 py-10 sm:py-16">
       {/* Top bar */}
       <header className="flex items-center justify-between">
-        <BrandWordmark />
+        <Link href="/" aria-label="Peaches Lounge" className="inline-flex">
+          <Image
+            src="/brand/logo.png"
+            alt="Peaches Lounge"
+            width={1578}
+            height={656}
+            className="h-[30px] w-auto"
+            priority
+          />
+        </Link>
         <div className="flex items-center gap-2">
           <Button
             variant="secondary"

@@ -14,15 +14,25 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-// Cursive script used only for the handwriting splash wordmark.
+// Thin cursive script — no longer used by the splash (see Pacifico below), but
+// components/brand-wordmark.tsx still references --font-script, so it stays.
 const sacramento = Sacramento({
   variable: "--font-script",
   subsets: ["latin"],
   weight: "400",
 });
 
+// Bold, rounded, connected script — closest Google Font match to the real
+// logo's lettering. Used by the splash wordmark (components/brand-splash.tsx).
+
 const SITE_DESCRIPTION =
   "Peaches Lounge is a reformer Pilates, yoga, and matcha bar in West Vancouver — a calm, curved little world built for genuine community, not just a workout.";
+
+// Absolute URL (not a relative path + metadataBase) to match the existing
+// openGraph.url convention below and avoid a build error, since no
+// metadataBase is configured. The stacked logo is 2048x2048 — a purpose-made
+// 1200x630 og image is a future nicety, this is a placeholder using the real brand asset.
+const OG_IMAGE_URL = "https://peacheslounge.com/brand/logo-stacked.png";
 
 export const metadata: Metadata = {
   title: "Peaches Lounge — Pilates, Yoga & Matcha Bar in West Vancouver",
@@ -38,6 +48,15 @@ export const metadata: Metadata = {
     siteName: "Peaches Lounge",
     locale: "en_CA",
     type: "website",
+    images: [
+      { url: OG_IMAGE_URL, width: 2048, height: 2048, alt: "Peaches Lounge" },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Peaches Lounge — Pilates, Yoga & Matcha Bar in West Vancouver",
+    description: SITE_DESCRIPTION,
+    images: [OG_IMAGE_URL],
   },
 };
 
