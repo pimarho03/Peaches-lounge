@@ -190,6 +190,7 @@
     border: 1px solid rgba(255,255,255,.65);
     box-shadow: 0 10px 26px rgba(169,118,90,.24), inset 0 1px 0 rgba(255,255,255,.65);
     opacity: 0;                       /* rest: hidden until its keyframe fires */
+    visibility: hidden;               /* also unfocusable until pl-fade-rise */
     transform: translateY(8px);
     will-change: transform, opacity;
     transition: transform .15s ease, box-shadow .15s ease;
@@ -305,8 +306,8 @@
   }
 
   @keyframes pl-fade-rise {
-    from { opacity: 0; transform: translateY(8px); }
-    to   { opacity: 1; transform: translateY(0);   }
+    from { opacity: 0; transform: translateY(8px); visibility: hidden;  }
+    to   { opacity: 1; transform: translateY(0);   visibility: visible; }
   }
 
   /* ---- reduced motion: skip write-on/sheen entirely, just fade in ---------- */

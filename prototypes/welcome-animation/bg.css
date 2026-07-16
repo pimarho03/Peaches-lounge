@@ -132,9 +132,9 @@
 .pl-bg--settle { animation: pl-bg-bloom .7s cubic-bezier(.22,.61,.36,1) both; }
 
 @keyframes pl-bg-bloom {
-  from { opacity: 0; filter: blur(22px) brightness(.62) saturate(.85); }
+  0%   { opacity: 0; filter: blur(22px) brightness(.62) saturate(.85); }
   60%  { opacity: 1; }
-  to   { opacity: 1; filter: blur(0)   brightness(1)   saturate(1); }
+  100% { opacity: 1; filter: blur(0)   brightness(1)   saturate(1); }
 }
 
 /* ---- drift keyframes (transform + opacity only) -------------------------- */
@@ -178,5 +178,5 @@
   .pl-bg-blob,
   .pl-bg-wave { animation: none !important; }
   .pl-bg--settle { animation: pl-bg-fade .5s ease both; }
-  @keyframes pl-bg-fade { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes pl-bg-fade { 0% { opacity: 0; } 100% { opacity: 1; } }
 }

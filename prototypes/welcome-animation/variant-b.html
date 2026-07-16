@@ -100,6 +100,10 @@ html,body{
   -webkit-mask-position:100% 50%; mask-position:100% 50%;
 
   opacity:0;
+}
+/* every timeline animation is gated behind .welcome.playing so that replay
+   (remove class → reflow → re-add) restarts the WHOLE sequence in lockstep */
+.welcome.playing .letter{
   animation: pl-write 360ms cubic-bezier(.42,.03,.30,1) both;
   animation-delay: calc(900ms + var(--i,0) * 172ms);
 }
@@ -111,7 +115,8 @@ html,body{
 }
 
 /* ---- (1) bloom halo ------------------------------------------------------- */
-.glow{ filter: blur(11px); opacity:0; animation: pl-glow-in 1.5s 3.4s both; }
+.glow{ filter: blur(11px); opacity:0; }
+.welcome.playing .glow{ animation: pl-glow-in 1.5s 3.4s both; }
 .glow .letter{ color: rgba(255,214,180,.85); -webkit-text-fill-color: rgba(255,214,180,.85); }
 @keyframes pl-glow-in{ from{opacity:0;} to{opacity:.55;} }
 
@@ -150,7 +155,8 @@ html,body{
 }
 
 /* ---- (6) one-shot sheen sweep (plays once, after the word finishes) ------- */
-.sheen{ opacity:0; mix-blend-mode:screen; animation: pl-sheen-show 1.15s 3.9s both; will-change:opacity; }
+.sheen{ opacity:0; mix-blend-mode:screen; will-change:opacity; }
+.welcome.playing .sheen{ animation: pl-sheen-show 1.15s 3.9s both; }
 .sheen .letter{
   /* fully present (no write mask); a bright band travels across via bg-pos */
   -webkit-mask:none; mask:none; opacity:1;
@@ -162,22 +168,25 @@ html,body{
   background-position:165% 50%;
   -webkit-background-clip:text; background-clip:text;
   color:transparent; -webkit-text-fill-color:transparent;
-  animation: pl-sheen-move 1.15s 3.9s both;
 }
+.welcome.playing .sheen .letter{ animation: pl-sheen-move 1.15s 3.9s both; }
 @keyframes pl-sheen-move{ from{background-position:165% 50%;} to{background-position:-65% 50%;} }
 @keyframes pl-sheen-show{ 0%{opacity:0;} 22%{opacity:1;} 78%{opacity:1;} 100%{opacity:0;} }
 
 /* ---- Continue : liquid-glass pill ---------------------------------------- */
 .continue-wrap{
   opacity:0;
+  visibility:hidden;                  /* button unfocusable until entrance */
   transform:translateY(8px);
-  animation: pl-continue-in .9s 4.6s both;
   will-change:transform,opacity;
   pointer-events:auto;
 }
+.welcome.playing .continue-wrap{
+  animation: pl-continue-in .9s 4.6s both;
+}
 @keyframes pl-continue-in{
-  from{ opacity:0; transform:translateY(8px); }
-  to  { opacity:1; transform:translateY(0); }
+  from{ opacity:0; transform:translateY(8px); visibility:hidden;  }
+  to  { opacity:1; transform:translateY(0);   visibility:visible; }
 }
 .continue{
   appearance:none; border:none;
@@ -237,11 +246,14 @@ html,body{
   .glow{ opacity:.5 !important; animation:none !important; }
   .body{ filter:none; }               /* keep it simple & flat */
   .sheen{ display:none !important; }
-  .word{ animation: pl-word-fade .7s .2s both; }
-  .continue-wrap{ animation: pl-fade-only .8s .7s both; }
+  .welcome.playing .word{ animation: pl-word-fade .7s .2s both; }
+  .welcome.playing .continue-wrap{ animation: pl-fade-only .8s .7s both; }
 }
 @keyframes pl-word-fade{ from{opacity:0;} to{opacity:1;} }
-@keyframes pl-fade-only{ from{opacity:0;} to{opacity:1;} }
+@keyframes pl-fade-only{
+  from{ opacity:0; visibility:hidden;  }
+  to  { opacity:1; visibility:visible; }
+}
 </style>
 </head>
 
@@ -272,8 +284,9 @@ html,body{
   </svg>
 
   <!-- ===== foreground ===== -->
-  <div class="welcome">
-    <div class="word" id="word"><!-- layers injected by JS --></div>
+  <div class="welcome playing" id="welcome">
+    <div class="word" id="word" role="img"
+         aria-label="Peaches Lounge"><!-- layers injected by JS --></div>
 
     <div class="continue-wrap">
       <button class="continue" type="button">Continue</button>
@@ -288,8 +301,9 @@ html,body{
   "use strict";
   var WORDS  = [ ["P","e","a","c","h","e","s"], ["L","o","u","n","g","e"] ];
   var LAYERS = ["glow","shadow","body","fill","spec","sheen"];
-  var word   = document.getElementById("word");
-  var bg     = document.getElementById("bg");
+  var word    = document.getElementById("word");
+  var bg      = document.getElementById("bg");
+  var welcome = document.getElementById("welcome");
 
   function build(){
     word.textContent = "";
@@ -314,12 +328,16 @@ html,body{
     }
   }
 
-  // Rebuild the word DOM (fresh nodes restart every CSS animation from its
-  // delay) and re-trigger the background bloom with a forced reflow.
+  // Every timeline animation (letters, glow, sheen, Continue, reduced-motion
+  // fades) is gated behind .welcome.playing, so removing the class, forcing a
+  // reflow, and re-adding it restarts the whole sequence in lockstep — nodes
+  // outside #word included. The word DOM is also rebuilt for fresh letters.
   function play(){
-    build();
+    welcome.classList.remove("playing");
     bg.classList.remove("pl-bg--settle");
-    void bg.offsetWidth;                            // reflow so the class re-applies
+    build();
+    void welcome.offsetWidth;                       // reflow so classes re-apply
+    welcome.classList.add("playing");
     bg.classList.add("pl-bg--settle");
   }
 
