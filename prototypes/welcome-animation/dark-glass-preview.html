@@ -11,7 +11,7 @@
     background:#000;border-radius:14px;z-index:5}
   .overlay{position:absolute;inset:0;background:#111111;display:grid;place-items:center;
     animation:exit .6s ease 4.6s forwards}
-  .wm{position:relative;width:62%;aspect-ratio:1/1;transform:translateY(-6%) scale(.985);
+  .wm{position:relative;width:62%;transform:translateY(-6%) scale(.985);
     animation:settle 2.2s cubic-bezier(.3,.2,.2,1) .8s forwards;
     filter:drop-shadow(0 0 20px rgba(240,168,134,.5));}
   /* ONE feathered sweep across the WHOLE logo */
@@ -61,7 +61,7 @@
 <script>
   setInterval(() => {
     const old = document.getElementById('o');
-    const fresh = old.cloneNode(true); fresh.id = 'o';
+    const fresh = old.cloneNode(true);
     old.replaceWith(fresh);
   }, 6500);
 </script>
