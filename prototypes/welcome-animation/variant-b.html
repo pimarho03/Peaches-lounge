@@ -1,0 +1,355 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Peaches Lounge — Welcome (Vector Liquid Glass)</title>
+
+<!-- Shared dreamy Tahoe-style background (required import) -->
+<link rel="stylesheet" href="bg.css">
+
+<style>
+/* ============================================================================
+   VARIANT B — "true vector liquid glass"
+   Live vector cursive text ("Peaches Lounge") is written on per-letter with a
+   soft masked wipe (handwriting cadence), built from several stacked copies of
+   the SAME text to form a translucent rose-gold glass tube:
+     glow  → bloom halo (blurred)
+     shadow→ soft warm drop shadow
+     body  → real SVG liquid displacement over the text alpha  (feDisplacementMap)
+     fill  → translucent rose-gold tube gradient (bg shows through = live refraction)
+     spec  → crisp white top-edge highlight
+     sheen → one-shot specular sweep after completion
+   ========================================================================== */
+
+:root{
+  --rg-hi:   #F5E2D3;   /* rose-gold highlight */
+  --rg-mid:  #D99C7F;   /* rose-gold mid       */
+  --rg-deep: #A9765A;   /* rose-gold deep      */
+  --ink:     #6B4A3A;   /* warm-brown UI text  */
+}
+
+*{ box-sizing:border-box; }
+
+html,body{
+  margin:0;
+  height:100%;
+  background:#0d0a09;                 /* start near-black so the bg blooms IN */
+  overflow:hidden;
+  -webkit-font-smoothing:antialiased;
+  text-rendering:optimizeLegibility;
+}
+
+/* Foreground stage sits above the fixed .pl-bg (z-index:0) ------------------ */
+.welcome{
+  position:fixed;
+  inset:0;
+  z-index:2;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap: clamp(26px, 6vh, 60px);
+  padding: 6vh 5vw;
+  pointer-events:none;               /* let clicks pass except on controls */
+}
+
+/* ----- the wordmark : all layers share one grid cell = perfect alignment --- */
+.word{
+  display:grid;
+  place-items:center;
+  overflow:visible;
+  isolation:isolate;                 /* keep screen-blends local to the wordmark */
+  /* one cursive script for macOS / iOS; graceful fallbacks elsewhere */
+  font-family:"Snell Roundhand","Savoye LET","Apple Chancery","SignPainter",
+              "Segoe Script","Brush Script MT",cursive;
+  font-weight:700;
+  font-style:normal;
+  line-height:1;
+  font-size: clamp(50px, 10vw, 132px);
+  transform: translateZ(0);
+}
+.layer{
+  grid-area:1 / 1;                    /* stack every copy in the same cell */
+  display:flex;
+  flex-direction:row;
+  align-items:baseline;
+  justify-content:center;
+  gap:0.34em;                         /* space between "Peaches" and "Lounge" */
+  white-space:nowrap;
+}
+.grp{ display:block; white-space:nowrap; }
+
+/* Each glyph is its own box so the reveal wipe can walk letter-by-letter.
+   Generous padding gives cursive ascenders/descenders room inside the box so
+   the mask never clips a loop; negative horizontal margin re-connects them.   */
+.letter{
+  display:inline-block;
+  padding:.60em .32em .50em;
+  margin:0 -.32em;
+  color:transparent;
+  -webkit-text-fill-color:transparent;
+
+  /* soft left-to-right reveal: black is on the LEFT of a 3x-wide mask; we
+     slide it from hidden (pos 100%) to revealed (pos 0%) so the pen edge
+     (the soft ramp) travels from the left of each glyph to the right.       */
+  -webkit-mask-image:linear-gradient(90deg, #000 0 38%, rgba(0,0,0,0) 66% 100%);
+          mask-image:linear-gradient(90deg, #000 0 38%, rgba(0,0,0,0) 66% 100%);
+  -webkit-mask-repeat:no-repeat;  mask-repeat:no-repeat;
+  -webkit-mask-size:300% 100%;    mask-size:300% 100%;
+  -webkit-mask-position:100% 50%; mask-position:100% 50%;
+
+  opacity:0;
+}
+/* every timeline animation is gated behind .welcome.playing so that replay
+   (remove class → reflow → re-add) restarts the WHOLE sequence in lockstep */
+.welcome.playing .letter{
+  animation: pl-write 360ms cubic-bezier(.42,.03,.30,1) both;
+  animation-delay: calc(900ms + var(--i,0) * 172ms);
+}
+
+@keyframes pl-write{
+  0%   { -webkit-mask-position:100% 50%; mask-position:100% 50%; opacity:0; }
+  16%  { opacity:1; }
+  100% { -webkit-mask-position:0% 50%; mask-position:0% 50%; opacity:1; }
+}
+
+/* ---- (1) bloom halo ------------------------------------------------------- */
+.glow{ filter: blur(11px); opacity:0; }
+.welcome.playing .glow{ animation: pl-glow-in 1.5s 3.4s both; }
+.glow .letter{ color: rgba(255,214,180,.85); -webkit-text-fill-color: rgba(255,214,180,.85); }
+@keyframes pl-glow-in{ from{opacity:0;} to{opacity:.55;} }
+
+/* ---- (2) soft warm drop shadow ------------------------------------------- */
+.shadow{ filter: blur(6px); transform: translateY(9px) scaleY(.985); }
+.shadow .letter{ color: rgba(92,52,38,.40); -webkit-text-fill-color: rgba(92,52,38,.40); }
+
+/* ---- (3) liquid-glass body : REAL SVG displacement over the text alpha ---- */
+.body{ filter: url(#pl-liquid) blur(.4px); }
+.body .letter{ color: rgba(228,178,148,.34); -webkit-text-fill-color: rgba(228,178,148,.34); }
+
+/* ---- (4) translucent rose-gold tube (the animated bg shows through) ------- */
+.fill .letter{
+  background:linear-gradient(177deg,
+    rgba(255,243,233,.95) 0%,
+    rgba(240,197,168,.82) 24%,
+    var(--rg-mid) 50%,          /* opaque-ish core keeps colour readable      */
+    rgba(196,133,102,.78) 74%,
+    rgba(150,96,70,.86) 100%);
+  -webkit-background-clip:text; background-clip:text;
+  color:transparent; -webkit-text-fill-color:transparent;
+  text-shadow:
+    0 1px 0   rgba(255,244,235,.45),
+    0 -1px 1px rgba(150,90,65,.22);
+}
+
+/* ---- (5) crisp specular top-edge highlight ------------------------------- */
+.spec{ mix-blend-mode:screen; }
+.spec .letter{
+  background:linear-gradient(170deg,
+    rgba(255,255,255,.98) 0%,
+    rgba(255,255,255,.52) 12%,
+    rgba(255,255,255,0)  40%);
+  -webkit-background-clip:text; background-clip:text;
+  color:transparent; -webkit-text-fill-color:transparent;
+}
+
+/* ---- (6) one-shot sheen sweep (plays once, after the word finishes) ------- */
+.sheen{ opacity:0; mix-blend-mode:screen; will-change:opacity; }
+.welcome.playing .sheen{ animation: pl-sheen-show 1.15s 3.9s both; }
+.sheen .letter{
+  /* fully present (no write mask); a bright band travels across via bg-pos */
+  -webkit-mask:none; mask:none; opacity:1;
+  background:linear-gradient(100deg,
+    rgba(255,255,255,0) 0 40%,
+    rgba(255,255,255,.92) 50%,
+    rgba(255,255,255,0) 60% 100%);
+  background-size:250% 100%;
+  background-position:165% 50%;
+  -webkit-background-clip:text; background-clip:text;
+  color:transparent; -webkit-text-fill-color:transparent;
+}
+.welcome.playing .sheen .letter{ animation: pl-sheen-move 1.15s 3.9s both; }
+@keyframes pl-sheen-move{ from{background-position:165% 50%;} to{background-position:-65% 50%;} }
+@keyframes pl-sheen-show{ 0%{opacity:0;} 22%{opacity:1;} 78%{opacity:1;} 100%{opacity:0;} }
+
+/* ---- Continue : liquid-glass pill ---------------------------------------- */
+.continue-wrap{
+  opacity:0;
+  visibility:hidden;                  /* button unfocusable until entrance */
+  transform:translateY(8px);
+  will-change:transform,opacity;
+  pointer-events:auto;
+}
+.welcome.playing .continue-wrap{
+  animation: pl-continue-in .9s 4.6s both;
+}
+@keyframes pl-continue-in{
+  from{ opacity:0; transform:translateY(8px); visibility:hidden;  }
+  to  { opacity:1; transform:translateY(0);   visibility:visible; }
+}
+.continue{
+  appearance:none; border:none;
+  font-family:-apple-system,"SF Pro Text",system-ui,"Segoe UI",Roboto,sans-serif;
+  font-size: clamp(15px, 1.5vw, 18px);
+  font-weight:500;
+  letter-spacing:.01em;
+  color:var(--ink);
+  padding:.82em 1.9em;
+  border-radius:999px;
+  cursor:pointer;
+  background:rgba(255,250,246,.34);
+  -webkit-backdrop-filter:blur(16px) saturate(1.5);
+          backdrop-filter:blur(16px) saturate(1.5);
+  border:1px solid rgba(255,255,255,.55);
+  box-shadow:
+    0 10px 30px rgba(150,90,60,.16),
+    inset 0 1px 0 rgba(255,255,255,.7),
+    inset 0 -1px 3px rgba(180,120,90,.12);
+  transition: transform .18s ease, box-shadow .18s ease;
+}
+.continue:hover{ box-shadow:0 12px 34px rgba(150,90,60,.22), inset 0 1px 0 rgba(255,255,255,.8); }
+.continue:active{ transform:scale(.97); }
+
+/* ---- unobtrusive replay control (design review only) --------------------- */
+.replay{
+  position:fixed; right:16px; bottom:16px; z-index:50;
+  width:38px; height:38px; border-radius:50%;
+  display:grid; place-items:center;
+  font-size:18px; line-height:1; color:var(--ink);
+  cursor:pointer; opacity:.5;
+  background:rgba(255,255,255,.26);
+  -webkit-backdrop-filter:blur(10px) saturate(1.4);
+          backdrop-filter:blur(10px) saturate(1.4);
+  border:1px solid rgba(255,255,255,.5);
+  box-shadow:0 6px 18px rgba(150,90,60,.16);
+  transition:opacity .2s ease, transform .2s ease;
+}
+.replay:hover{ opacity:1; transform:rotate(-40deg); }
+.replay:active{ transform:rotate(-180deg) scale(.92); }
+
+/* ============================ PORTRAIT / PHONE ============================= */
+/* Stack the two words; matches bg.css's own portrait breakpoint.            */
+@media (max-aspect-ratio: 3/4){
+  .word{ font-size: clamp(64px, 23vw, 150px); }
+  .layer{ flex-direction:column; align-items:center; gap:0; }  /* centre both lines */
+  .grp + .grp{ margin-top:-.16em; }   /* tuck the second line up, like the logo */
+}
+
+/* ========================= REDUCED MOTION ================================= */
+@media (prefers-reduced-motion: reduce){
+  .letter{
+    animation:none !important;
+    -webkit-mask:none !important; mask:none !important;
+    opacity:1 !important;
+  }
+  .glow{ opacity:.5 !important; animation:none !important; }
+  .body{ filter:none; }               /* keep it simple & flat */
+  .sheen{ display:none !important; }
+  .welcome.playing .word{ animation: pl-word-fade .7s .2s both; }
+  .welcome.playing .continue-wrap{ animation: pl-fade-only .8s .7s both; }
+}
+@keyframes pl-word-fade{ from{opacity:0;} to{opacity:1;} }
+@keyframes pl-fade-only{
+  from{ opacity:0; visibility:hidden;  }
+  to  { opacity:1; visibility:visible; }
+}
+</style>
+</head>
+
+<body>
+
+  <!-- ===== shared dreamy background (bottom layer, entrance = .pl-bg--settle) ===== -->
+  <div class="pl-bg pl-bg--settle" id="bg">
+    <div class="pl-bg-blob b1"></div>
+    <div class="pl-bg-blob b2"></div>
+    <div class="pl-bg-blob b3"></div>
+    <div class="pl-bg-blob b4"></div>
+    <div class="pl-bg-blob b5"></div>
+    <div class="pl-bg-wave"></div>
+    <div class="pl-bg-grain"></div>
+  </div>
+
+  <!-- ===== inline SVG filter : real liquid-glass displacement of the text ===== -->
+  <svg width="0" height="0" aria-hidden="true" style="position:absolute">
+    <defs>
+      <filter id="pl-liquid" x="-30%" y="-60%" width="160%" height="220%"
+              color-interpolation-filters="sRGB">
+        <feTurbulence type="fractalNoise" baseFrequency="0.008 0.014"
+                      numOctaves="2" seed="11" result="noise"/>
+        <feDisplacementMap in="SourceGraphic" in2="noise" scale="3.5"
+                           xChannelSelector="R" yChannelSelector="G"/>
+      </filter>
+    </defs>
+  </svg>
+
+  <!-- ===== foreground ===== -->
+  <div class="welcome playing" id="welcome">
+    <div class="word" id="word" role="img"
+         aria-label="Peaches Lounge"><!-- layers injected by JS --></div>
+
+    <div class="continue-wrap">
+      <button class="continue" type="button">Continue</button>
+    </div>
+  </div>
+
+  <div class="replay" id="replay" role="button" tabindex="0"
+       aria-label="Replay animation" title="Replay">&#x21bb;</div>
+
+<script>
+(function(){
+  "use strict";
+  var WORDS  = [ ["P","e","a","c","h","e","s"], ["L","o","u","n","g","e"] ];
+  var LAYERS = ["glow","shadow","body","fill","spec","sheen"];
+  var word    = document.getElementById("word");
+  var bg      = document.getElementById("bg");
+  var welcome = document.getElementById("welcome");
+
+  function build(){
+    word.textContent = "";
+    for(var l=0; l<LAYERS.length; l++){
+      var layer = document.createElement("div");
+      layer.className = "layer " + LAYERS[l];
+      var idx = 0;                                  // shared index across both words
+      for(var w=0; w<WORDS.length; w++){
+        if(w > 0){ idx += 0.7; }                    // pen-lift pause between words
+        var grp = document.createElement("div");
+        grp.className = "grp";
+        for(var c=0; c<WORDS[w].length; c++){
+          var s = document.createElement("span");
+          s.className = "letter";
+          s.textContent = WORDS[w][c];
+          s.style.setProperty("--i", idx++);
+          grp.appendChild(s);
+        }
+        layer.appendChild(grp);
+      }
+      word.appendChild(layer);
+    }
+  }
+
+  // Every timeline animation (letters, glow, sheen, Continue, reduced-motion
+  // fades) is gated behind .welcome.playing, so removing the class, forcing a
+  // reflow, and re-adding it restarts the whole sequence in lockstep — nodes
+  // outside #word included. The word DOM is also rebuilt for fresh letters.
+  function play(){
+    welcome.classList.remove("playing");
+    bg.classList.remove("pl-bg--settle");
+    build();
+    void welcome.offsetWidth;                       // reflow so classes re-apply
+    welcome.classList.add("playing");
+    bg.classList.add("pl-bg--settle");
+  }
+
+  var replay = document.getElementById("replay");
+  replay.addEventListener("click", play);
+  replay.addEventListener("keydown", function(e){
+    if(e.key === "Enter" || e.key === " "){ e.preventDefault(); play(); }
+  });
+
+  play();
+})();
+</script>
+
+</body>
+</html>

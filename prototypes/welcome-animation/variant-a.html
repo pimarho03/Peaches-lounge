@@ -1,0 +1,298 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Peaches Lounge — Welcome</title>
+<link rel="stylesheet" href="bg.css">
+<style>
+  /* =========================================================================
+     Peaches Lounge — Welcome (Technique A: brush-path mask write-on)
+     Builds ON TOP of the shared bg.css dreamy backdrop.
+     Animations touch only transform / opacity / stroke-dashoffset / mask.
+     ========================================================================= */
+
+  :root{
+    --pl-brown:#6B4A3A;                    /* warm-brown label */
+    --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+            "Helvetica Neue", Arial, sans-serif;
+  }
+
+  html,body{ height:100%; }
+  body{
+    margin:0;
+    background:#F8F1EC;                    /* matches cream base; no flash */
+    font-family:var(--font);
+    overflow:hidden;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  /* the whole scene ------------------------------------------------------- */
+  .stage{ position:fixed; inset:0; z-index:0; }
+
+  /* centred column: wordmark + Continue ----------------------------------- */
+  .center{
+    position:absolute; inset:0; z-index:2;
+    display:flex; flex-direction:column;
+    align-items:center; justify-content:center;
+    padding:6vmin;
+    box-sizing:border-box;
+    pointer-events:none;                  /* let bg breathe; button re-enables */
+  }
+
+  /* wordmark box keeps the exact landscape logo aspect so masks align ------ */
+  .wordmark{
+    position:relative;
+    width:min(86vw, 980px);
+    aspect-ratio:3156 / 1312;
+  }
+  /* portrait / phone: scale the SAME landscape lockup down (money view) */
+  @media (max-aspect-ratio:3/4){
+    .wordmark{ width:min(92vw, 620px); }
+  }
+
+  .logo-svg{
+    display:block; width:100%; height:100%;
+    /* sit the rose-gold glass nicely on the peach bg + depth */
+    filter:
+      drop-shadow(0 12px 30px rgba(150,86,60,.30))
+      drop-shadow(0 2px 6px rgba(120,70,50,.22))
+      saturate(1.06) brightness(1.02) contrast(1.02);
+  }
+
+  /* the animated pen stroke lives inside the <mask> ----------------------- */
+  .writeStroke{
+    fill:none;
+    stroke:#fff;
+    stroke-width:182;
+    stroke-linecap:round;
+    stroke-linejoin:round;
+    /* pathLength is normalised to 1000 on the element */
+    stroke-dasharray:1000;
+    stroke-dashoffset:1000;               /* hidden until write-on runs */
+  }
+  .stage.playing .writeStroke{
+    animation: pl-write 2.6s cubic-bezier(.4,0,.2,1) .9s both;
+  }
+  @keyframes pl-write{ to{ stroke-dashoffset:0; } }
+
+  /* the unmasked logo crossfades in as the pen finishes, so the final
+     state is always the complete artwork regardless of path coverage */
+  .logo-full{ opacity:0; }
+  .stage.playing .logo-full{
+    animation: logo-solidify .55s ease 3.3s both;
+  }
+  @keyframes logo-solidify{ to{ opacity:1; } }
+
+  /* one-time specular sheen, masked to the letter alpha ------------------- */
+  .sheen{
+    position:absolute; inset:0;
+    pointer-events:none;
+    opacity:0;
+    overflow:hidden;
+    mix-blend-mode:screen;
+    -webkit-mask-image:url("logo-horizontal-clean.png");
+            mask-image:url("logo-horizontal-clean.png");
+    -webkit-mask-size:100% 100%;   mask-size:100% 100%;
+    -webkit-mask-repeat:no-repeat; mask-repeat:no-repeat;
+    -webkit-mask-position:center;  mask-position:center;
+  }
+  .sheen::before{
+    content:"";
+    position:absolute; top:-25%; bottom:-25%; left:0;
+    width:42%;
+    background:linear-gradient(100deg,
+      rgba(255,255,255,0)   0%,
+      rgba(255,250,244,.12) 34%,
+      rgba(255,255,255,.9)  50%,
+      rgba(255,250,244,.12) 66%,
+      rgba(255,255,255,0)   100%);
+    transform:translateX(-170%) skewX(-12deg);
+    filter:blur(2px);
+  }
+  .stage.playing .sheen{
+    animation: sheen-show 1.2s ease 4.0s both;
+  }
+  .stage.playing .sheen::before{
+    animation: sheen-sweep 1.2s cubic-bezier(.35,0,.3,1) 4.0s both;
+  }
+  @keyframes sheen-show{
+    0%{opacity:0} 12%{opacity:1} 88%{opacity:1} 100%{opacity:0}
+  }
+  @keyframes sheen-sweep{
+    from{ transform:translateX(-170%) skewX(-12deg); }
+    to  { transform:translateX(430%)  skewX(-12deg); }
+  }
+
+  /* liquid-glass Continue pill ------------------------------------------- */
+  .continue-btn{
+    pointer-events:auto;
+    margin-top:clamp(30px, 6vh, 68px);
+    padding:14px 36px;
+    border-radius:999px;
+    border:1px solid rgba(255,255,255,.55);
+    background:rgba(255,255,255,.26);
+    -webkit-backdrop-filter:blur(16px) saturate(1.35);
+            backdrop-filter:blur(16px) saturate(1.35);
+    color:var(--pl-brown);
+    font:600 clamp(15px,1.7vw,18px)/1 var(--font);
+    letter-spacing:.02em;
+    box-shadow:
+      0 10px 26px rgba(150,90,70,.20),
+      inset 0 1px 0 rgba(255,255,255,.65),
+      inset 0 -1px 2px rgba(180,120,95,.18);
+    cursor:pointer;
+    opacity:0;
+    visibility:hidden;                    /* unfocusable until btn-rise begins */
+    transform:translateY(8px);
+    transition:background .25s ease, transform .25s ease;
+  }
+  .continue-btn:hover{ background:rgba(255,255,255,.4); }
+  .continue-btn:active{ transform:translateY(1px) scale(.99); }
+  .stage.playing .continue-btn{
+    animation: btn-rise .8s cubic-bezier(.22,.61,.36,1) 4.6s both;
+  }
+  @keyframes btn-rise{
+    from{ opacity:0; transform:translateY(8px); visibility:hidden;  }
+    to  { opacity:1; transform:translateY(0);   visibility:visible; }
+  }
+
+  /* unobtrusive replay (design-review only) ------------------------------ */
+  .replay{
+    position:fixed; right:16px; bottom:16px; z-index:5;
+    width:40px; height:40px;
+    display:flex; align-items:center; justify-content:center;
+    border-radius:50%;
+    border:1px solid rgba(255,255,255,.45);
+    background:rgba(255,255,255,.22);
+    -webkit-backdrop-filter:blur(10px); backdrop-filter:blur(10px);
+    color:#7a5544; font-size:20px; line-height:1;
+    opacity:.45; cursor:pointer;
+    transition:opacity .2s ease, transform .2s ease;
+  }
+  .replay:hover{ opacity:1; }
+  .replay:active{ transform:rotate(-40deg); }
+
+  /* ---- reduced motion: skip the write-on, gently fade everything in ----- */
+  @media (prefers-reduced-motion: reduce){
+    .writeStroke{ animation:none !important; stroke-dashoffset:0 !important; }
+    .logo-full{ opacity:1 !important; animation:none !important; }
+    .sheen{ display:none !important; }
+    .center{ opacity:0; }
+    .stage.playing .center{ animation: rm-fade .7s ease .15s both; }
+    .continue-btn{
+      opacity:1 !important; transform:none !important; animation:none !important;
+      visibility:visible !important;
+    }
+  }
+  @keyframes rm-fade{ from{opacity:0} to{opacity:1} }
+</style>
+</head>
+<body>
+
+  <div class="stage playing" id="stage">
+
+    <!-- shared dreamy backdrop (bottom layer) -->
+    <div class="pl-bg pl-bg--settle" id="bg">
+      <div class="pl-bg-blob b1"></div>
+      <div class="pl-bg-blob b2"></div>
+      <div class="pl-bg-blob b3"></div>
+      <div class="pl-bg-blob b4"></div>
+      <div class="pl-bg-blob b5"></div>
+      <div class="pl-bg-wave"></div>
+      <div class="pl-bg-grain"></div>
+    </div>
+
+    <!-- wordmark + Continue -->
+    <div class="center">
+      <div class="wordmark">
+        <svg class="logo-svg" viewBox="0 0 3156 1312"
+             xmlns="http://www.w3.org/2000/svg"
+             xmlns:xlink="http://www.w3.org/1999/xlink"
+             role="img" aria-label="Peaches Lounge">
+          <defs>
+            <!-- single round-capped pen stroke tracing the cursive path -->
+            <mask id="pl-writeMask" maskUnits="objectBoundingBox"
+                  maskContentUnits="userSpaceOnUse"
+                  x="-5%" y="-10%" width="110%" height="130%">
+              <path class="writeStroke" pathLength="1000" d="
+                M 340,860
+                Q 250,620 250,400  Q 270,300 400,320  Q 470,380 440,560
+                Q 420,720 400,870  Q 500,700 500,560  Q 520,560 560,610
+                Q 620,545 660,640  Q 700,760 680,820
+                Q 730,600 800,560  Q 870,600 860,720  Q 855,830 840,850
+                Q 900,600 990,570  Q 1030,650 1010,780 Q 995,840 980,840
+                Q 1055,560 1070,340 Q 1085,300 1120,360 Q 1150,560 1140,760
+                Q 1140,600 1200,585 Q 1225,660 1210,830
+                Q 1250,600 1320,565 Q 1370,640 1350,760 Q 1340,830 1320,835
+                Q 1400,600 1470,570 Q 1510,620 1450,700 Q 1420,760 1500,790
+                Q 1520,840 1490,860
+                Q 1560,830 1650,790
+                Q 1690,600 1710,380 Q 1740,290 1820,300 Q 1880,360 1830,500
+                Q 1790,580 1760,640 Q 1800,760 1900,860 Q 1990,930 2060,900
+                Q 2060,800 2050,720
+                Q 2070,600 2140,565 Q 2210,600 2200,700 Q 2190,810 2110,800
+                Q 2060,740 2085,650
+                Q 2230,600 2250,780 Q 2300,840 2340,780 Q 2350,600 2370,600
+                Q 2385,700 2390,800
+                Q 2410,600 2440,585 Q 2470,600 2490,780 Q 2500,600 2560,590
+                Q 2590,680 2590,800
+                Q 2620,600 2700,565 Q 2760,600 2745,720 Q 2700,790 2650,760
+                Q 2640,660 2690,620 Q 2740,760 2730,900 Q 2720,1010 2650,1000
+                Q 2600,985 2620,900
+                Q 2760,780 2820,720 Q 2850,600 2930,565 Q 3010,600 3000,710
+                Q 2985,820 2920,810 Q 2960,860 3050,820
+              "/>
+            </mask>
+          </defs>
+
+          <!-- the real rose-gold glass logo, revealed through the mask -->
+          <image href="logo-horizontal-clean.png"
+                 xlink:href="logo-horizontal-clean.png"
+                 x="0" y="0" width="3156" height="1312"
+                 mask="url(#pl-writeMask)"
+                 preserveAspectRatio="xMidYMid meet"/>
+          <!-- solidify layer: fades in as the pen finishes (see .logo-full) -->
+          <image class="logo-full" href="logo-horizontal-clean.png"
+                 xlink:href="logo-horizontal-clean.png"
+                 x="0" y="0" width="3156" height="1312"
+                 preserveAspectRatio="xMidYMid meet"/>
+        </svg>
+
+        <!-- specular sheen, clipped to the letter shapes -->
+        <div class="sheen"></div>
+      </div>
+
+      <button class="continue-btn" type="button">Continue</button>
+    </div>
+
+    <!-- design-review replay -->
+    <button class="replay" id="replay" type="button"
+            aria-label="Replay animation" title="Replay">&#8635;</button>
+
+  </div>
+
+<script>
+  (function(){
+    var stage  = document.getElementById('stage');
+    var bg     = document.getElementById('bg');
+    var replay = document.getElementById('replay');
+
+    function play(){
+      // remove -> force reflow -> re-add so every CSS/SVG animation restarts
+      stage.classList.remove('playing');
+      bg.classList.remove('pl-bg--settle');
+      void stage.offsetWidth;                 // reflow flush
+      stage.classList.add('playing');
+      bg.classList.add('pl-bg--settle');
+    }
+
+    replay.addEventListener('click', play);
+
+    // The Continue button is a design placeholder for review.
+    document.querySelector('.continue-btn')
+            .addEventListener('click', function(e){ e.preventDefault(); });
+  })();
+</script>
+</body>
+</html>

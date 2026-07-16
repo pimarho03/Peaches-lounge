@@ -1,0 +1,182 @@
+/* ============================================================================
+   Peaches Lounge — Shared dreamy welcome background  (bg.css)
+   ----------------------------------------------------------------------------
+   Recreates the soft Tahoe "welcome" backdrop in warm peach/cream tones:
+   a milky cream base with warm tones pooling low, heavily-blurred drifting
+   colour blobs, and one large glassy diagonal wave with a crisp light rim.
+
+   Expected DOM (blobs b1..b5 required; wave + grain optional but recommended):
+
+     <div class="pl-bg">
+       <div class="pl-bg-blob b1"></div>
+       <div class="pl-bg-blob b2"></div>
+       <div class="pl-bg-blob b3"></div>
+       <div class="pl-bg-blob b4"></div>
+       <div class="pl-bg-blob b5"></div>
+       <div class="pl-bg-wave"></div>
+       <div class="pl-bg-grain"></div>
+     </div>
+
+   Entrance: add the class `pl-bg--settle` to `.pl-bg` to bloom it in from
+   darker + blurrier over 0.7s (remove/re-add to replay).
+
+   KNOBS (CSS custom properties on .pl-bg):
+     --pl-bg-cream / --pl-peach / --pl-blush / --pl-coral / --pl-deep / --pl-sand
+     --pl-bg-drift   global drift-speed multiplier (default 1; higher = slower)
+     --pl-grain      grain opacity (default .035)
+
+   GPU-friendly: every looping keyframe animates only transform / opacity.
+   Blur is static (not animated) except the one-shot entrance bloom.
+   ============================================================================ */
+
+.pl-bg {
+  /* palette knobs */
+  --pl-bg-cream: #F8F1EC;
+  --pl-peach:    #FFD7B8;
+  --pl-blush:    #F6C8C0;
+  --pl-coral:    #F2A68C;
+  --pl-deep:     #E8927C;
+  --pl-sand:     #F5E6C8;
+  --pl-grain: .035;
+
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  z-index: 0;
+  isolation: isolate;          /* keep blend modes local to the background */
+
+  /* Milky cream base — NOT white — with warmer tones pooling toward the bottom.
+     A soft radial "pool" of deeper peach anchors the lower half like the frames. */
+  background:
+    radial-gradient(120% 80% at 78% 108%, var(--pl-deep) 0%, rgba(232,146,124,0) 55%),
+    radial-gradient(90% 70% at 18% 100%, var(--pl-coral) 0%, rgba(242,166,140,0) 52%),
+    linear-gradient(158deg,
+      #FBF4EE 0%,
+      var(--pl-bg-cream) 34%,
+      #F3DDCB 68%,
+      #EDBFA4 100%);
+  background-color: var(--pl-bg-cream);
+}
+
+/* ---- soft drifting colour blobs ------------------------------------------ */
+.pl-bg-blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(60px);
+  opacity: .9;
+  will-change: transform;
+  mix-blend-mode: normal;
+  /* radial fill assigned per-blob below */
+}
+
+/* each blob: big, soft (radial fade to transparent), different orbit + tempo */
+.pl-bg .b1 {   /* top-left — warm peach highlight */
+  width: 68vmax; height: 68vmax;
+  top: -22vmax; left: -16vmax;
+  background: radial-gradient(circle at 50% 50%, var(--pl-peach) 0%, rgba(255,215,184,0) 66%);
+  animation: pl-drift-1 calc(43s * var(--pl-bg-drift, 1)) ease-in-out infinite alternate;
+}
+.pl-bg .b2 {   /* top-right — warm sand / cream */
+  width: 62vmax; height: 62vmax;
+  top: -20vmax; right: -18vmax;
+  background: radial-gradient(circle at 50% 50%, var(--pl-sand) 0%, rgba(245,230,200,0) 64%);
+  animation: pl-drift-2 calc(37s * var(--pl-bg-drift, 1)) ease-in-out infinite alternate;
+  opacity: .8;
+}
+.pl-bg .b3 {   /* centre — blush */
+  width: 58vmax; height: 58vmax;
+  top: 22vmax; left: 24vmax;
+  background: radial-gradient(circle at 50% 50%, var(--pl-blush) 0%, rgba(246,200,192,0) 62%);
+  animation: pl-drift-3 calc(47s * var(--pl-bg-drift, 1)) ease-in-out infinite alternate;
+}
+.pl-bg .b4 {   /* bottom-left — soft coral (pools low) */
+  width: 66vmax; height: 66vmax;
+  bottom: -24vmax; left: -14vmax;
+  background: radial-gradient(circle at 50% 50%, var(--pl-coral) 0%, rgba(242,166,140,0) 60%);
+  animation: pl-drift-4 calc(41s * var(--pl-bg-drift, 1)) ease-in-out infinite alternate;
+}
+.pl-bg .b5 {   /* bottom-right — deeper peach (darkest pool) */
+  width: 72vmax; height: 72vmax;
+  bottom: -28vmax; right: -20vmax;
+  background: radial-gradient(circle at 50% 50%, var(--pl-deep) 0%, rgba(232,146,124,0) 58%);
+  animation: pl-drift-5 calc(31s * var(--pl-bg-drift, 1)) ease-in-out infinite alternate;
+  opacity: .85;
+}
+
+/* ---- the glassy diagonal wave -------------------------------------------- */
+.pl-bg-wave {
+  position: absolute;
+  inset: -6% -6% -6% -6%;      /* slight overscan so blur edges never show */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1280 800' preserveAspectRatio='xMidYMid slice'%3E%3Cdefs%3E%3ClinearGradient id='w' x1='0.1' y1='0' x2='0.9' y2='1'%3E%3Cstop offset='0' stop-color='%23FDEEE1' stop-opacity='0.55'/%3E%3Cstop offset='0.4' stop-color='%23F6C8C0' stop-opacity='0.72'/%3E%3Cstop offset='0.72' stop-color='%23F0A084' stop-opacity='0.85'/%3E%3Cstop offset='1' stop-color='%23E4886F'/%3E%3C/linearGradient%3E%3ClinearGradient id='r' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%23FFFAF3'/%3E%3Cstop offset='1' stop-color='%23FFE6D3'/%3E%3C/linearGradient%3E%3Cfilter id='g'%3E%3CfeGaussianBlur stdDeviation='8'/%3E%3C/filter%3E%3C/defs%3E%3Cpath d='M1280,-20 L1280,820 L-20,820 L-20,560 C240,520 360,400 520,235 C610,140 685,35 830,-20 Z' fill='url(%23w)'/%3E%3Cpath d='M-20,560 C240,520 360,400 520,235 C610,140 685,35 830,-20' fill='none' stroke='%23FFF3E6' stroke-opacity='0.55' stroke-width='22' filter='url(%23g)'/%3E%3Cpath d='M-20,560 C240,520 360,400 520,235 C610,140 685,35 830,-20' fill='none' stroke='url(%23r)' stroke-width='5' stroke-opacity='0.95'/%3E%3Cpath d='M-20,560 C240,520 360,400 520,235 C610,140 685,35 830,-20' fill='none' stroke='%23FFFFFF' stroke-width='1.6' stroke-opacity='0.9'/%3E%3C/svg%3E");
+  background-size: cover;
+  background-position: center;
+  filter: blur(1.5px);         /* soft glass, but the rim stays crisp-ish */
+  opacity: .8;
+  mix-blend-mode: normal;      /* the SVG carries its own translucency */
+  will-change: transform;
+  animation: pl-wave-drift calc(60s * var(--pl-bg-drift, 1)) ease-in-out infinite alternate;
+}
+
+/* ---- ultra-subtle grain (kills gradient banding) ------------------------- */
+.pl-bg-grain {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: var(--pl-grain);
+  mix-blend-mode: soft-light;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 140px 140px;
+}
+
+/* ---- entrance bloom (one-shot; add .pl-bg--settle to replay) -------------- */
+.pl-bg--settle { animation: pl-bg-bloom .7s cubic-bezier(.22,.61,.36,1) both; }
+
+@keyframes pl-bg-bloom {
+  0%   { opacity: 0; filter: blur(22px) brightness(.62) saturate(.85); }
+  60%  { opacity: 1; }
+  100% { opacity: 1; filter: blur(0)   brightness(1)   saturate(1); }
+}
+
+/* ---- drift keyframes (transform + opacity only) -------------------------- */
+@keyframes pl-drift-1 {
+  0%   { transform: translate3d(0,0,0) scale(1); }
+  100% { transform: translate3d(6vmax,4vmax,0) scale(1.08); }
+}
+@keyframes pl-drift-2 {
+  0%   { transform: translate3d(0,0,0) scale(1.04); opacity: .8; }
+  100% { transform: translate3d(-5vmax,5vmax,0) scale(1); opacity: .62; }
+}
+@keyframes pl-drift-3 {
+  0%   { transform: translate3d(0,0,0) scale(1); }
+  100% { transform: translate3d(4vmax,-5vmax,0) scale(1.12); }
+}
+@keyframes pl-drift-4 {
+  0%   { transform: translate3d(0,0,0) scale(1.06); }
+  100% { transform: translate3d(7vmax,-4vmax,0) scale(1); }
+}
+@keyframes pl-drift-5 {
+  0%   { transform: translate3d(0,0,0) scale(1); opacity: .85; }
+  100% { transform: translate3d(-6vmax,-3vmax,0) scale(1.1); opacity: .72; }
+}
+@keyframes pl-wave-drift {
+  0%   { transform: translate3d(0,0,0) scale(1.02) rotate(0deg); }
+  100% { transform: translate3d(-2.4%,1.6%,0) scale(1.06) rotate(-1.1deg); }
+}
+
+/* ---- portrait / phone: keep the diagonal wave & pool reading well -------- */
+@media (max-aspect-ratio: 3/4) {
+  .pl-bg-wave {
+    background-position: 34% 42%;
+    filter: blur(1.5px);
+    opacity: .78;
+  }
+  .pl-bg .b5 { bottom: -34vmax; }   /* keep the darkest pool anchored low */
+}
+
+/* ---- accessibility: honour reduced motion -------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  .pl-bg-blob,
+  .pl-bg-wave { animation: none !important; }
+  .pl-bg--settle { animation: pl-bg-fade .5s ease both; }
+  @keyframes pl-bg-fade { 0% { opacity: 0; } 100% { opacity: 1; } }
+}

@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Peaches Lounge — Background (bg.css) standalone</title>
+  <link rel="stylesheet" href="bg.css">
+  <style>
+    html, body { margin: 0; height: 100%; background: #F8F1EC; }
+    body { font: 500 13px/1.4 -apple-system, "SF Pro Text", system-ui, sans-serif; color: #6B4A3A; }
+
+    /* tiny caption + replay so the background can be reviewed on its own */
+    .demo-caption {
+      position: fixed; left: 50%; bottom: 22px; transform: translateX(-50%);
+      z-index: 5; padding: 7px 14px; border-radius: 999px;
+      background: rgba(255,255,255,.35); backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border: 1px solid rgba(255,255,255,.5);
+      letter-spacing: .02em; opacity: .8;
+    }
+    .replay {
+      position: fixed; right: 16px; bottom: 16px; z-index: 6;
+      width: 38px; height: 38px; border-radius: 50%; cursor: pointer;
+      display: grid; place-items: center; font-size: 17px; color: #6B4A3A;
+      background: rgba(255,255,255,.35); backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border: 1px solid rgba(255,255,255,.5);
+      box-shadow: 0 4px 14px rgba(169,118,90,.18);
+      transition: transform .2s ease, background .2s ease;
+    }
+    .replay:hover { transform: rotate(-40deg); background: rgba(255,255,255,.55); }
+  </style>
+</head>
+<body>
+  <div class="pl-bg pl-bg--settle" id="bg">
+    <div class="pl-bg-blob b1"></div>
+    <div class="pl-bg-blob b2"></div>
+    <div class="pl-bg-blob b3"></div>
+    <div class="pl-bg-blob b4"></div>
+    <div class="pl-bg-blob b5"></div>
+    <div class="pl-bg-wave"></div>
+    <div class="pl-bg-grain"></div>
+  </div>
+
+  <div class="demo-caption">bg.css — shared Peaches Lounge background</div>
+  <button class="replay" id="replay" title="Replay entrance" aria-label="Replay entrance">&#8635;</button>
+
+  <script>
+    // Replay the entrance bloom by removing + re-adding the settle class.
+    var bg = document.getElementById('bg');
+    document.getElementById('replay').addEventListener('click', function () {
+      bg.classList.remove('pl-bg--settle');
+      void bg.offsetWidth;            // force reflow so the animation restarts
+      bg.classList.add('pl-bg--settle');
+    });
+  </script>
+</body>
+</html>
