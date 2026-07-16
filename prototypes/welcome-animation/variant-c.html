@@ -1,0 +1,414 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Peaches Lounge — Welcome</title>
+<link rel="stylesheet" href="bg.css">
+<style>
+  /* ==========================================================================
+     Peaches Lounge — Welcome write-on (Technique C: sequential letter wipe)
+     --------------------------------------------------------------------------
+     Layers, bottom to top:
+       1. bg.css shared backdrop (.pl-bg)               — imported, untouched
+       2. .pl-scene                                     — wordmark + Continue
+       3. .replay-btn                                   — design-review only
+
+     Timeline (from page load / replay):
+       0.0–0.7s   background bloom-in            (bg.css, automatic)
+       0.9–3.5s   wordmark write-on ("ink" scale 0.985→1 in parallel)
+       4.0–5.1s   one-shot specular sheen sweep across the finished glass
+       4.6–5.3s   "Continue" pill fades in + rises 8px
+       forever    background drifts (bg.css)
+
+     Replay: remove + reflow + re-add the class pair that gates every
+     animation (`.pl-bg--settle` on #bg, `.is-playing` on #scene). Because
+     every rule below the "===ENTRANCE ANIMATIONS===" marker is written as
+     `#scene.is-playing …`, removing the class removes the `animation`
+     declaration entirely — reflow — re-adding it starts fresh at 0%, so the
+     whole sequence (including the background bloom) restarts in lockstep.
+     ========================================================================== */
+
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    height: 100%;
+    background: #F8F1EC; /* matches bg.css cream base — avoids any flash before bg.css paints */
+    overflow: hidden;
+  }
+  body {
+    font: 500 15px/1.4 -apple-system, "SF Pro Text", system-ui, sans-serif;
+  }
+
+  .sr-only {
+    position: absolute; width: 1px; height: 1px;
+    padding: 0; margin: -1px; overflow: hidden;
+    clip: rect(0,0,0,0); white-space: nowrap; border: 0;
+  }
+
+  /* Typed custom property so --reveal can be smoothly *interpolated* (not just
+     substituted) across keyframes — this is what lets the write-on ease
+     continuously instead of snapping between stops. */
+  @property --reveal {
+    syntax: '<percentage>';
+    inherits: false;
+    initial-value: 0%;
+  }
+
+  /* -------------------------------------------------------------------------
+     Scene root — sits above .pl-bg (z-index:0, fixed, from bg.css)
+     ------------------------------------------------------------------------- */
+  .pl-scene {
+    position: fixed;
+    inset: 0;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: clamp(22px, 5vh, 44px);
+    padding: 24px;
+    text-align: center;
+  }
+
+  .wordmark-stage { position: relative; z-index: 2; }
+
+  /* Which logo shows: horizontal by default, stacked on narrow/portrait. */
+  .wordmark--v { display: none; }
+  .wordmark--h { display: block; }
+  @media (max-aspect-ratio: 3/4), (max-width: 640px) {
+    .wordmark--h { display: none; }
+    .wordmark--v { display: block; }
+  }
+
+  .wm-shadow-wrap {
+    position: relative;
+    display: inline-block;
+    line-height: 0;
+    filter: drop-shadow(0 22px 34px rgba(169,118,90,.32)) drop-shadow(0 3px 8px rgba(169,118,90,.22));
+    transform: scale(.985);          /* rest state: "ink" not yet settled */
+    transform-origin: 50% 50%;
+    will-change: transform;
+  }
+
+  /* ---- horizontal wordmark (desktop / landscape) --------------------------- */
+  .wordmark--h .wm-shadow-wrap { width: min(70vw, 620px); }
+  .wordmark--h .wm-img {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+
+  /* ---- stacked wordmark (mobile / portrait), two-phase --------------------- */
+  .wordmark--v .wm-shadow-wrap {
+    width: min(52vw, 300px);
+    aspect-ratio: 1 / 1;
+  }
+  .wm-phase {
+    position: absolute;
+    inset: 0;
+  }
+  .wm-phase img {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+  /* "Peaches" occupies roughly the upper half of the square canvas, "Lounge"
+     the lower half; the 6% overlap band keeps either word from ever being
+     clipped mid-stroke. */
+  .wm-phase--top {
+    clip-path: inset(0 0 46% 0);
+    -webkit-clip-path: inset(0 0 46% 0);
+  }
+  .wm-phase--bottom {
+    clip-path: inset(40% 0 0 0);
+    -webkit-clip-path: inset(40% 0 0 0);
+  }
+
+  /* ---- the write-on mask itself --------------------------------------------
+     A single feathered vertical edge (8% soft) sweeps left→right by animating
+     --reveal from 0% to 108% (the +8% overshoot guarantees the feather fully
+     clears the right edge instead of leaving a faint gradient sliver). */
+  .wm-img,
+  .wm-phase img {
+    --reveal: 0%;
+    -webkit-mask-image: linear-gradient(90deg, #000 0%, #000 var(--reveal), transparent calc(var(--reveal) + 8%), transparent 100%);
+            mask-image: linear-gradient(90deg, #000 0%, #000 var(--reveal), transparent calc(var(--reveal) + 8%), transparent 100%);
+    -webkit-mask-repeat: no-repeat;
+            mask-repeat: no-repeat;
+    -webkit-mask-size: 100% 100%;
+            mask-size: 100% 100%;
+  }
+
+  /* ---- specular sheen sweep (one-shot, after write-on completes) ----------- */
+  .wm-sheen-mask {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    -webkit-mask-repeat: no-repeat;
+            mask-repeat: no-repeat;
+    -webkit-mask-size: 100% 100%;
+            mask-size: 100% 100%;
+    mix-blend-mode: screen;
+    pointer-events: none;
+  }
+  .wordmark--h .wm-sheen-mask {
+    -webkit-mask-image: url("logo-horizontal.png");
+            mask-image: url("logo-horizontal.png");
+  }
+  .wordmark--v .wm-sheen-mask {
+    -webkit-mask-image: url("logo-stacked.png");
+            mask-image: url("logo-stacked.png");
+  }
+  .wm-sheen-strip {
+    position: absolute;
+    top: -25%;
+    left: -45%;
+    width: 35%;
+    height: 150%;
+    background: linear-gradient(100deg, transparent 0%, rgba(255,251,245,.95) 48%, transparent 100%);
+    filter: blur(2px);
+    transform: translateX(0%);       /* rest: fully off-canvas to the left */
+    will-change: transform;
+  }
+
+  /* ---- Continue pill -------------------------------------------------------- */
+  .continue-wrap { position: relative; z-index: 2; }
+  .continue-btn {
+    appearance: none;
+    -webkit-appearance: none;
+    border: 0;
+    cursor: pointer;
+    padding: 14px 42px;
+    border-radius: 999px;
+    font: 600 16px/1 -apple-system, "SF Pro Text", system-ui, sans-serif;
+    letter-spacing: .01em;
+    color: #6B4A3A;
+    background: linear-gradient(180deg, rgba(255,255,255,.55), rgba(255,255,255,.26));
+    -webkit-backdrop-filter: blur(20px) saturate(1.5);
+            backdrop-filter: blur(20px) saturate(1.5);
+    border: 1px solid rgba(255,255,255,.65);
+    box-shadow: 0 10px 26px rgba(169,118,90,.24), inset 0 1px 0 rgba(255,255,255,.65);
+    opacity: 0;                       /* rest: hidden until its keyframe fires */
+    transform: translateY(8px);
+    will-change: transform, opacity;
+    transition: transform .15s ease, box-shadow .15s ease;
+  }
+  .continue-btn:active { transform: translateY(1px) scale(.98); }
+
+  /* ---- replay affordance (design-review only) ------------------------------ */
+  .replay-btn {
+    position: fixed;
+    right: 16px;
+    bottom: 16px;
+    z-index: 6;
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    border: 1px solid rgba(255,255,255,.5);
+    display: grid;
+    place-items: center;
+    font-size: 17px;
+    color: #6B4A3A;
+    cursor: pointer;
+    background: rgba(255,255,255,.35);
+    -webkit-backdrop-filter: blur(8px);
+            backdrop-filter: blur(8px);
+    box-shadow: 0 4px 14px rgba(169,118,90,.18);
+    opacity: .55;
+    transition: transform .2s ease, background .2s ease, opacity .2s ease;
+  }
+  .replay-btn:hover { opacity: 1; transform: rotate(-40deg); background: rgba(255,255,255,.55); }
+
+  /* ==========================================================================
+     ===ENTRANCE ANIMATIONS===
+     Every rule below is gated behind `#scene.is-playing` so that removing the
+     class (replay) truly stops+resets every animation, and re-adding it after
+     a forced reflow starts the whole sequence again from 0%.
+     ========================================================================== */
+
+  #scene.is-playing .wm-shadow-wrap {
+    animation: pl-ink-settle 2.6s cubic-bezier(.3,.2,.2,1) .9s both;
+  }
+
+  #scene.is-playing .wordmark--h .wm-img {
+    animation: pl-write-on-h 2.6s linear .9s both;
+  }
+  #scene.is-playing .wordmark--v .wm-phase--top img {
+    animation: pl-write-on-top 1.2s linear .9s both;
+  }
+  #scene.is-playing .wordmark--v .wm-phase--bottom img {
+    animation: pl-write-on-bottom 1.4s linear 2.1s both;
+  }
+
+  #scene.is-playing .wm-sheen-strip {
+    animation: pl-sheen-sweep 1.1s cubic-bezier(.4,.05,.3,1) 4s both;
+  }
+
+  #scene.is-playing .continue-btn {
+    animation: pl-fade-rise .7s cubic-bezier(.22,.61,.36,1) 4.6s both;
+  }
+
+  @keyframes pl-ink-settle {
+    from { transform: scale(.985); }
+    to   { transform: scale(1); }
+  }
+
+  /* "PeachesLounge" — 13 letters, uneven time:reveal ratio per letter so
+     loop-heavy letters (P, a, L, o, g) linger and plain strokes (e, c, u, n)
+     move quickly, e.g. a pen actually writing rather than a linear wipe. */
+  @keyframes pl-write-on-h {
+    0%   { --reveal: 0%;   }  /* start */
+    14%  { --reveal: 8%;   }  /* P  — loop, slow  */
+    19%  { --reveal: 16%;  }  /* e  — quick */
+    29%  { --reveal: 24%;  }  /* a  — loop, slow */
+    35%  { --reveal: 32%;  }  /* c  — quick */
+    44%  { --reveal: 41%;  }  /* h  — medium */
+    49%  { --reveal: 48%;  }  /* e  — quick */
+    56%  { --reveal: 56%;  }  /* s  — medium */
+    65%  { --reveal: 63%;  }  /* L  — ascender, slow */
+    74%  { --reveal: 70%;  }  /* o  — loop, slow */
+    79%  { --reveal: 77%;  }  /* u  — quick */
+    84%  { --reveal: 84%;  }  /* n  — quick */
+    93%  { --reveal: 92%;  }  /* g  — loop+descender, slow */
+    100% { --reveal: 108%; }  /* e + feather clears edge */
+  }
+
+  /* "Peaches" — phase 1 of the stacked variant */
+  @keyframes pl-write-on-top {
+    0%   { --reveal: 0%;   }
+    20%  { --reveal: 12%;  }  /* P — loop, slow */
+    28%  { --reveal: 24%;  }  /* e */
+    42%  { --reveal: 36%;  }  /* a — loop, slow */
+    51%  { --reveal: 48%;  }  /* c */
+    64%  { --reveal: 61%;  }  /* h */
+    72%  { --reveal: 73%;  }  /* e */
+    82%  { --reveal: 85%;  }  /* s */
+    100% { --reveal: 108%; }  /* feather clears edge */
+  }
+
+  /* "Lounge" — phase 2 of the stacked variant, more loop letters so it runs
+     slightly longer overall (1.4s vs phase 1's 1.2s). */
+  @keyframes pl-write-on-bottom {
+    0%   { --reveal: 0%;   }
+    20%  { --reveal: 14%;  }  /* L — ascender+loop, slow */
+    38%  { --reveal: 29%;  }  /* o — loop, slow */
+    50%  { --reveal: 45%;  }  /* u — quick */
+    60%  { --reveal: 60%;  }  /* n — quick */
+    80%  { --reveal: 76%;  }  /* g — loop+descender, slow */
+    100% { --reveal: 108%; }  /* e + feather clears edge */
+  }
+
+  @keyframes pl-sheen-sweep {
+    from { transform: translateX(0%);    }
+    to   { transform: translateX(450%);  }
+  }
+
+  @keyframes pl-fade-rise {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0);   }
+  }
+
+  /* ---- reduced motion: skip write-on/sheen entirely, just fade in ---------- */
+  @media (prefers-reduced-motion: reduce) {
+    #scene.is-playing .wm-shadow-wrap {
+      animation: pl-simple-fade .6s ease .2s both;
+      transform: none;
+    }
+    #scene.is-playing .wordmark--h .wm-img,
+    #scene.is-playing .wordmark--v .wm-phase--top img,
+    #scene.is-playing .wordmark--v .wm-phase--bottom img {
+      animation: none;
+      -webkit-mask-image: none;
+              mask-image: none;
+    }
+    #scene.is-playing .wm-sheen-strip,
+    #scene.is-playing .wm-sheen-mask {
+      display: none;
+    }
+    #scene.is-playing .continue-btn {
+      animation: pl-fade-rise .6s ease .5s both;
+    }
+  }
+  @keyframes pl-simple-fade { from { opacity: 0; } to { opacity: 1; } }
+</style>
+</head>
+<body>
+
+  <div class="pl-bg pl-bg--settle" id="bg">
+    <div class="pl-bg-blob b1"></div>
+    <div class="pl-bg-blob b2"></div>
+    <div class="pl-bg-blob b3"></div>
+    <div class="pl-bg-blob b4"></div>
+    <div class="pl-bg-blob b5"></div>
+    <div class="pl-bg-wave"></div>
+    <div class="pl-bg-grain"></div>
+  </div>
+
+  <main class="pl-scene is-playing" id="scene">
+    <h1 class="sr-only">Welcome to Peaches Lounge</h1>
+
+    <div class="wordmark-stage">
+      <!-- horizontal wordmark: desktop / landscape -->
+      <div class="wordmark wordmark--h">
+        <div class="wm-shadow-wrap">
+          <img class="wm-img" src="logo-horizontal.png" alt="Peaches Lounge" width="3156" height="1312">
+          <div class="wm-sheen-mask" aria-hidden="true">
+            <div class="wm-sheen-strip"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- stacked wordmark: mobile / portrait, two-phase reveal -->
+      <div class="wordmark wordmark--v">
+        <div class="wm-shadow-wrap">
+          <div class="wm-phase wm-phase--top">
+            <img src="logo-stacked.png" alt="Peaches Lounge" width="2048" height="2048">
+          </div>
+          <div class="wm-phase wm-phase--bottom">
+            <img src="logo-stacked.png" alt="" width="2048" height="2048">
+          </div>
+          <div class="wm-sheen-mask" aria-hidden="true">
+            <div class="wm-sheen-strip"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="continue-wrap">
+      <button class="continue-btn" type="button">Continue</button>
+    </div>
+  </main>
+
+  <button class="replay-btn" id="replayBtn" title="Replay animation" aria-label="Replay animation">&#8635;</button>
+
+  <script>
+    // Replay = remove the gating classes, force a reflow, re-add them.
+    // Because every timeline rule is written as `#bg.pl-bg--settle` /
+    // `#scene.is-playing …`, this fully resets every animation (background
+    // bloom, write-on, sheen, Continue fade) back to 0% and restarts them
+    // together, in lockstep, from the beginning.
+    (function () {
+      var bg = document.getElementById('bg');
+      var scene = document.getElementById('scene');
+      var replay = document.getElementById('replayBtn');
+
+      replay.addEventListener('click', function () {
+        bg.classList.remove('pl-bg--settle');
+        scene.classList.remove('is-playing');
+
+        // Reading offsetWidth forces the browser to flush layout, so the
+        // class removal above is fully committed before we re-add below —
+        // without this the browser would coalesce remove+add into a no-op
+        // and the animations would never restart.
+        void bg.offsetWidth;
+        void scene.offsetWidth;
+
+        bg.classList.add('pl-bg--settle');
+        scene.classList.add('is-playing');
+      });
+    })();
+  </script>
+
+</body>
+</html>

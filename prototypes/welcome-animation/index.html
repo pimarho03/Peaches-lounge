@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Peaches Lounge — Welcome Animation Variants</title>
+<style>
+  :root { color-scheme: light; }
+  * { box-sizing: border-box; margin: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    background: #F8F1EC; color: #6B4A3A; min-height: 100vh;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 28px; padding: 40px 20px;
+  }
+  h1 { font-size: 22px; font-weight: 600; letter-spacing: -0.2px; }
+  p { color: #A9765A; font-size: 14px; }
+  .cards { display: flex; gap: 18px; flex-wrap: wrap; justify-content: center; }
+  a.card {
+    display: block; width: 240px; padding: 22px 24px; border-radius: 24px;
+    background: rgba(255,255,255,0.65); border: 1px solid rgba(255,255,255,0.9);
+    box-shadow: 0 8px 30px rgba(169,118,90,0.12); text-decoration: none; color: inherit;
+    backdrop-filter: blur(12px); transition: transform .25s ease, box-shadow .25s ease;
+  }
+  a.card:hover { transform: translateY(-3px); box-shadow: 0 14px 40px rgba(169,118,90,0.2); }
+  .card b { display: block; font-size: 16px; margin-bottom: 6px; }
+  .card span { font-size: 13px; color: #A9765A; line-height: 1.45; }
+</style>
+</head>
+<body>
+  <h1>Peaches Lounge — Welcome Animation</h1>
+  <p>Tahoe-style liquid-glass write-on · pick a variant</p>
+  <div class="cards">
+    <a class="card" href="variant-a.html"><b>A · Brush path</b><span>Hand-traced pen-path mask reveals the real logo like handwriting</span></a>
+    <a class="card" href="variant-b.html"><b>B · Vector glass</b><span>Live vector script with layered liquid-glass refraction</span></a>
+    <a class="card" href="variant-c.html"><b>C · Letter wipe</b><span>Feathered per-letter mask sweep across the logo</span></a>
+    <a class="card" href="bg-demo.html"><b>Background only</b><span>Shared animated peach gradient + glass wave</span></a>
+  </div>
+</body>
+</html>
