@@ -1,9 +1,18 @@
 <!doctype html>
-<html><head><meta charset="utf-8"><title>bg static bake</title>
+<html><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>bg static bake</title>
 <link rel="stylesheet" href="bg.css">
 <style>
   html,body{margin:0;height:100%;overflow:hidden;background:#F8F1EC}
-  /* freeze everything at its natural (fully-settled) state for the bake */
+  /* Freeze at the settled composition. NOTE: with animations cancelled,
+     elements sit at their BASE styles — which in bg.css is exactly the
+     settled frame: the `.pl-bg--settle` bloom animates INTO the base state
+     (its final keyframe equals the un-animated styles, and the class is
+     deliberately not applied here), and the drift loops are `alternate`
+     oscillations AROUND the base positions. If bg.css ever changes so that
+     base styles stop being the settled frame, this bake page must change
+     with it. */
   .pl-bg, .pl-bg *{ animation: none !important; }
 </style>
 </head><body>
